@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: netflix-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: qwerty
+      MYSQL_DATABASE: netflix
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+
+  laravel:
+    build:
+      context: .
+      dockerfile: ./netflix-api/Dockerfile
+    container_name: netflix-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./netflix-api:/var/www/html
+    depends_on:
+      - mariadb
+    environment:
+      DB_HOST: mariadb
+      DB_DATABASE: netflix
+      DB_USERNAME: root
+      DB_PASSWORD: qwerty
+
+  node:
+    image: node:18
+    container_name: netflix-node
+    working_dir: /app/netflix-api
+    ports:
+      - "5173:5173"  
+    volumes:
+      - .:/app       
+    command: sh -c "npm install && npm run dev"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5173
+
+
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: netflix-phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: qwerty
+    depends_on:
+      - mariadb
+
+
+volumes:
+  db-data:
