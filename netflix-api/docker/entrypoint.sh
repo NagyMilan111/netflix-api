@@ -10,6 +10,7 @@ composer install --no-interaction --prefer-dist
 
 # Run migrations
 php artisan migrate
+php artisan db:seed
 
 # Clear and optimize caches
 php artisan optimize:clear

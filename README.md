@@ -18,32 +18,28 @@ docker compose version
 
 ### Clone the Repository
 ```bash
-git clone <repository-url>
-cd <project-directory>
+git clone https://github.com/NagyMilan111/netflix-api.git
+cd netflix-api
+```
+### Clone the Repository(development branch)
+```bash
+git clone -b development https://github.com/NagyMilan111/netflix-api.git
+cd netflix-api
 ```
 
-### Build and Run the Docker Container
-1. **Build the Docker image**:
-   ```bash
-   docker build -t <image-name> .
-   ```
-
-2. **Run the Docker container**:
-   ```bash
-   docker run -d -p <host-port>:<container-port> --name <container-name> <image-name>
-   ```
-
-### Using Docker Compose (if applicable)
+### Using Docker Compose 
 If a `docker-compose.yml` file is provided:
 1. **Start the services**:
    ```bash
    docker compose up -d
    ```
+  This process can take a minute so please be patient until everything is booted up.
 
 2. **View running services**:
    ```bash
    docker compose ps
    ```
+  Or check docker desktop.
 
 3. **Stop the services**:
    ```bash
@@ -51,7 +47,7 @@ If a `docker-compose.yml` file is provided:
    ```
 
 ### Access the Application
-- Open your browser and go to: `http://localhost:<host-port>`
+- Open your browser and go to: `http://localhost:8000`
 
 ## Development Notes
 - To view logs:
@@ -69,6 +65,11 @@ If a `docker-compose.yml` file is provided:
   docker compose down
   docker compose up --build -d
   ```
+- To delete all volumes and build again:  
+  ```bash
+  docker compose down --volumes
+  docker compose up --build -d
+  ```
 
 ## Cleaning Up
 - To stop and remove the container:
@@ -81,11 +82,3 @@ If a `docker-compose.yml` file is provided:
   ```bash
   docker rmi <image-name>
   ```
-
-## Configuration
-If the project requires environment variables, create a `.env` file in the project directory with the necessary values:
-```env
-VARIABLE_NAME=value
-```
-
-Ensure the `docker-compose.yml` or `Dockerfile` is configured to use the `.env` file.

@@ -2,22 +2,43 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
-    public function run(): void
+    public function run()
     {
-        // User::factory(10)->create();
+        // Define seeders and their respective tables
+        $seeders = [
+            RolesSeeder::class => 'roles',
+            SubscriptionsSeeder::class => 'subscriptions',
+            AccountsSeeder::class => 'accounts',
+            ProfilesSeeder::class => 'profiles',
+            DiscountedUsersSeeder::class => 'discounted_users',
+            GenresSeeder::class => 'genres',
+            SeriesSeeder::class => 'series',
+            EpisodesSeeder::class => 'episodes',
+            MoviesSeeder::class => 'movies',
+            MediasSeeder::class => 'medias',
+            LanguagesSeeder::class => 'languages',
+            SubtitlesSeeder::class => 'subtitles',
+            ViewingClassificationsSeeder::class => 'viewing_classifications',
+            ProfilesWatchedMediasSeeder::class => 'profiles_watched_medias',
+            ProfilesWatchListSeeder::class => 'profiles_watch_list',
+            ProfileGenresSeeder::class => 'profile_genres',
+            ProfileViewingClassificationsSeeder::class => 'profiles_viewing_classifications',
+        ];
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        foreach ($seeders as $seeder => $table) {
+            if (DB::table($table)->count() === 0) {
+                $this->call($seeder);
+                $this->command->info("$seeder seeded successfully.");
+            } else {
+                $this->command->warn("$table table is not empty. Skipping $seeder.");
+            }
+        }
+
+        $this->command->info('Database seeded successfully.');
     }
 }
