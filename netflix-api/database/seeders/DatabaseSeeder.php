@@ -9,7 +9,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        // Define seeders and their respective tables
+        // Define seeders and their respective tables/views
         $seeders = [
             RolesSeeder::class => 'roles',
             SubscriptionsSeeder::class => 'subscriptions',
@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             ProfileViewingClassificationsSeeder::class => 'profiles_viewing_classifications',
         ];
 
+        // Run regular table-based seeders
         foreach ($seeders as $seeder => $table) {
             if (DB::table($table)->count() === 0) {
                 $this->call($seeder);
@@ -38,6 +39,10 @@ class DatabaseSeeder extends Seeder
                 $this->command->warn("$table table is not empty. Skipping $seeder.");
             }
         }
+
+        // Handle the MoviesEpisodesSeeder separately as it creates a view
+        $this->call(MoviesEpisodesSeeder::class);
+        $this->command->info('MoviesEpisodesSeeder (view creation) executed successfully.');
 
         $this->command->info('Database seeded successfully.');
     }

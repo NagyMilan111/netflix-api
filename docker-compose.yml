@@ -29,21 +29,8 @@ services:
       DB_DATABASE: netflix
       DB_USERNAME: root
       DB_PASSWORD: qwerty
-
-  node:
-    image: node:18
-    container_name: netflix-node
-    working_dir: /app/netflix-api
-    ports:
-      - "5173:5173"  
-    volumes:
-      - .:/app       
-    command: sh -c "npm install && npm run dev"
-    environment:
-      - HOST=0.0.0.0
-      - PORT=5173
-
-
+    command: >
+      sh -c "/var/www/html/docker/wait-for-it.sh mariadb:3306 -- /var/www/html/docker/entrypoint.sh"    
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin

@@ -18,7 +18,7 @@ class MoviesSeeder extends Seeder
 
         // Create movies associated with genres
         Genre::all()->each(function ($genre) {
-            Movie::factory(1000)->create([
+            Movie::factory(70)->create([
                 'genre_id' => $genre->genre_id, // Associate movies with a valid genre
             ]);
         });

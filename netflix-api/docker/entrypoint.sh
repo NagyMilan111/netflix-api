@@ -8,17 +8,23 @@ fi
 # Install Composer dependencies
 composer install --no-interaction --prefer-dist
 
-# Run migrations
-php artisan migrate
-php artisan db:seed
+# Run migrations and seed the database
+php artisan migrate --force
+php artisan db:seed --force
 
-# Clear and optimize caches
+# Generate the application key and clear caches
+php artisan key:generate
 php artisan optimize:clear
 php artisan config:clear
 php artisan cache:clear
 php artisan view:clear
 php artisan route:clear
-npm run dev
 
-# Serve Laravel application
-php artisan serve --host=0.0.0.0 --port=8000
+# Install Node.js dependencies
+npm install
+
+# Install npm-run-all globally (if not already installed)
+npm install -g npm-run-all
+
+# Start development servers
+npm run dev

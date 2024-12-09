@@ -3,7 +3,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build && vite build --ssr",
-        "dev": "vite"
+        "dev": "npm-run-all --parallel artisan-serve vite",
+        "artisan-serve": "php artisan serve --host=0.0.0.0 --port=8000",
+        "vite": "vite"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^1.0.0",
