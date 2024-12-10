@@ -1,21 +1,21 @@
-import { defineConfig } from "vite";
-import laravel from "laravel-vite-plugin";
-import vue from "@vitejs/plugin-vue";
+import { defineConfig } from 'vite';
+import laravel from 'laravel-vite-plugin';
+import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-    server: {
-        host: '0.0.0.0', // Allow access from all network interfaces
-        port: 5173, // Vite development server
-        strictPort: true,
-        hmr: {
-            host: 'localhost', // HMR should match the Laravel backend domain
-        },
-    },
     plugins: [
         laravel({
-            input: ['resources/js/app.js'],
+            input: 'resources/js/app.js',
+            ssr: 'resources/js/ssr.js',
             refresh: true,
         }),
-        vue(),
+        vue({
+            template: {
+                transformAssetUrls: {
+                    base: null,
+                    includeAbsolute: false,
+                },
+            },
+        }),
     ],
 });

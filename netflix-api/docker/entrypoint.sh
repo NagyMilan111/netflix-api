@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 # Ensure Laravel environment is set
 if [ ! -f .env ]; then
     cp .env.example .env
@@ -20,11 +22,12 @@ php artisan cache:clear
 php artisan view:clear
 php artisan route:clear
 
-# Install Node.js dependencies
+# Install Node.js dependencies and build assets
 npm install
+npm run build
 
 # Install npm-run-all globally (if not already installed)
 npm install -g npm-run-all
 
-# Start development servers
-npm run dev
+# Start Laravel server
+exec php artisan serve --host=0.0.0.0 --port=8000
