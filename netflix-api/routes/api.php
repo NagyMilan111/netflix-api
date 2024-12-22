@@ -9,51 +9,76 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ProfileController;
 
-// Main API routing for dynamic endpoints
+// Dynamic endpoint routing for Main API
+// Make sure this route does not conflict with others
 Route::any('/api/{endpoint}', [MainApiController::class, 'routeRequest']);
 
 // UserAccountController Routes
 Route::prefix('user')->group(function () {
-    Route::post('/profile', [UserAccountController::class, 'addProfile']);
-    Route::put('/subscription', [UserAccountController::class, 'updateSubscription']);
-    Route::get('/watchlist', [UserAccountController::class, 'getWatchHistory']);
-    Route::post('/watchlist/add/{mediaId}', [UserAccountController::class, 'manageWatchList']);
-    Route::delete('/watchlist/remove/{mediaId}', [UserAccountController::class, 'manageWatchList']);
+    // Add profile to the user
+    Route::post('/profile', [UserAccountController::class, 'addProfile'])->middleware('auth:sanctum');
+    // Update user's subscription
+    Route::put('/subscription', [UserAccountController::class, 'updateSubscription'])->middleware('auth:sanctum');
+    // Get user's watchlist history
+    Route::get('/watchlist', [UserAccountController::class, 'getWatchHistory'])->middleware('auth:sanctum');
+    // Add media to the watchlist
+    Route::post('/watchlist/add/{mediaId}', [UserAccountController::class, 'manageWatchList'])->middleware('auth:sanctum');
+    // Remove media from the watchlist
+    Route::delete('/watchlist/remove/{mediaId}', [UserAccountController::class, 'manageWatchList'])->middleware('auth:sanctum');
 });
 
 // AccountController Routes
 Route::prefix('account')->group(function () {
+    // User login route
     Route::post('/login', [AccountController::class, 'login']);
+    // User logout route
+    Route::post('/logout', [AccountController::class, 'logout'])->middleware('auth:sanctum');
+    // User registration route
     Route::post('/register', [AccountController::class, 'register']);
+    // Reset password functionality
     Route::post('/reset-password', [AccountController::class, 'resetPassword']);
-    Route::post('/block/{id}', [AccountController::class, 'blockAccount']);
+    // Block a user account (admin functionality)
+    Route::post('/block/{id}', [AccountController::class, 'blockAccount'])->middleware('auth:sanctum');
 });
 
 // TokenController Routes
 Route::prefix('token')->group(function () {
-    Route::post('/generate', [TokenController::class, 'generateToken']);
-    Route::post('/refresh', [TokenController::class, 'refreshToken']);
-    Route::post('/revoke', [TokenController::class, 'revokeToken']);
+    // Generate a new token
+    Route::post('/generate', [TokenController::class, 'generateToken'])->middleware('auth:sanctum');
+    // Refresh an existing token
+    Route::post('/refresh', [TokenController::class, 'refreshToken'])->middleware('auth:sanctum');
+    // Revoke a token
+    Route::post('/revoke', [TokenController::class, 'revokeToken'])->middleware('auth:sanctum');
+    // Validate a token
     Route::post('/validate', [TokenController::class, 'validateToken']);
 });
 
 // MediaController Routes
 Route::prefix('media')->group(function () {
-    Route::get('/{id}/play', [MediaController::class, 'playMedia']);
-    Route::post('/{id}/pause', [MediaController::class, 'pauseMedia']);
-    Route::post('/{id}/resume', [MediaController::class, 'resumeMedia']);
+    // Play media
+    Route::get('/{id}/play', [MediaController::class, 'playMedia'])->middleware('auth:sanctum');
+    // Pause media
+    Route::post('/{id}/pause', [MediaController::class, 'pauseMedia'])->middleware('auth:sanctum');
+    // Resume media
+    Route::post('/{id}/resume', [MediaController::class, 'resumeMedia'])->middleware('auth:sanctum');
 });
 
 // SubscriptionController Routes
 Route::prefix('subscription')->group(function () {
-    Route::get('/details', [SubscriptionController::class, 'getSubscriptionDetails']);
-    Route::put('/update', [SubscriptionController::class, 'updateSubscription']);
+    // Get subscription details
+    Route::get('/details', [SubscriptionController::class, 'getSubscriptionDetails'])->middleware('auth:sanctum');
+    // Update subscription
+    Route::put('/update', [SubscriptionController::class, 'updateSubscription'])->middleware('auth:sanctum');
 });
 
 // ProfileController Routes
 Route::prefix('profile')->group(function () {
-    Route::post('/', [ProfileController12::class, 'addProfile']);
-    Route::put('/preferences', [ProfileController12::class, 'updatePreferences']);
-    Route::delete('/{id}', [ProfileController12::class, 'deleteProfile']);
+    // Add a user profile
+    Route::post('/', [ProfileController::class, 'addProfile'])->middleware('auth:sanctum');
+    // Update user preferences
+    Route::put('/preferences', [ProfileController::class, 'updatePreferences'])->middleware('auth:sanctum');
+    // Delete a user profile
+    Route::delete('/{id}', [ProfileController::class, 'deleteProfile'])->middleware('auth:sanctum');
 });
+
 ?>
