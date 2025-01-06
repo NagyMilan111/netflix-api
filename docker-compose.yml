@@ -16,30 +16,32 @@ services:
       - APP_ENV=local
       - APP_DEBUG=true
       - APP_KEY=base64:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-      - DB_HOST=mysql
+      - DB_HOST=mariadb
       - DB_PORT=3306
-      - DB_DATABASE=laravel
+      - DB_DATABASE=Netflix
       - DB_USERNAME=root
-      - DB_PASSWORD=secret
+      - DB_PASSWORD=qwerty
     depends_on:
-      - mysql
+      - mariadb
     ports:
       - "9000:9000"
 
-  # MySQL Database
-  mysql:
-    image: mysql:8.0
-    container_name: mysql
-    restart: always
+  # MariaDB
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb-container
+    environment:
+      MYSQL_DATABASE: Netflix
+      MYSQL_ROOT_PASSWORD: qwerty
     volumes:
       - mysql_data:/var/lib/mysql
-    environment:
-      MYSQL_DATABASE: laravel
-      MYSQL_ROOT_PASSWORD: secret
-    networks:
-      - laravel
     ports:
       - "3306:3306"
+    networks:
+      - laravel
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: always
 
   # phpMyAdmin
   phpmyadmin:
@@ -49,10 +51,10 @@ services:
     ports:
       - "8080:80"
     environment:
-      PMA_HOST: mysql
+      PMA_HOST: mariadb
       MYSQL_ROOT_PASSWORD: secret
     depends_on:
-      - mysql
+      - mariadb
     networks:
       - laravel
 
@@ -69,9 +71,6 @@ services:
       - laravel
     depends_on:
       - app
-
-volumes:
-  mysql_data:
 
 networks:
   laravel:
