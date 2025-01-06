@@ -54,7 +54,16 @@ CREATE TABLE IF NOT EXISTS `Profile` (
     FOREIGN KEY (profile_lang) REFERENCES `Language` (lang_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 7. Create Media table (independent)
+-- 7. Create Series table (depends on Genre)
+CREATE TABLE IF NOT EXISTS `Series` (
+    series_id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    genre_id INT(11) NOT NULL,
+    number_of_seasons INT(11) DEFAULT 1,
+    FOREIGN KEY (genre_id) REFERENCES `Genre` (genre_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 8. Create Media table (independent)
 CREATE TABLE IF NOT EXISTS `Media` (
     media_id INT(11) AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -66,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `Media` (
 	FOREIGN KEY (genre_id) REFERENCES `Genre` (genre_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 8. Create Media_Quality table (depends on Media)
+-- 9. Create Media_Quality table (depends on Media)
 CREATE TABLE IF NOT EXISTS `Media_Quality` (
     media_id INT(11) PRIMARY KEY,
     has_uhd_version TINYINT(1) DEFAULT 0,
@@ -75,16 +84,7 @@ CREATE TABLE IF NOT EXISTS `Media_Quality` (
     FOREIGN KEY (media_id) REFERENCES `Media` (media_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 9. Create Series table (depends on Genre)
-CREATE TABLE IF NOT EXISTS `Series` (
-    series_id INT(11) AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    genre_id INT(11) NOT NULL,
-    number_of_seasons INT(11) DEFAULT 1,
-    FOREIGN KEY (genre_id) REFERENCES `Genre` (genre_id) ON DELETE CASCADE
-) ENGINE=InnoDB;
-
--- 11. Create Subtitle table (depends on Language and Media)
+-- 10. Create Subtitle table (depends on Language and Media)
 CREATE TABLE IF NOT EXISTS `Subtitle` (
     subtitle_id INT(11) AUTO_INCREMENT PRIMARY KEY,
     subtitle_lang INT(11) NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `Subtitle` (
     FOREIGN KEY (media_id) REFERENCES `Media` (media_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 12. Create Profile_Genre table (depends on Profile and Genre)
+-- 11. Create Profile_Genre table (depends on Profile and Genre)
 CREATE TABLE IF NOT EXISTS `Profile_Genre` (
     profile_id INT(11) NOT NULL,
     genre_id INT(11) NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `Profile_Genre` (
     FOREIGN KEY (genre_id) REFERENCES `Genre` (genre_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 13. Create Profile_Viewing_Classification table (depends on Profile and Viewing_Classification)
+-- 12. Create Profile_Viewing_Classification table (depends on Profile and Viewing_Classification)
 CREATE TABLE IF NOT EXISTS `Profile_Viewing_Classification` (
     profile_id INT(11) NOT NULL,
     classification_id INT(11) NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS `Profile_Viewing_Classification` (
     FOREIGN KEY (classification_id) REFERENCES `Viewing_Classification` (classification_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 14. Create Profile_Watched_Media table (depends on Profile, Media, and Subtitle)
+-- 13. Create Profile_Watched_Media table (depends on Profile, Media, and Subtitle)
 CREATE TABLE IF NOT EXISTS `Profile_Watched_Media` (
     profile_id INT(11) NOT NULL,
     media_id INT(11) NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE IF NOT EXISTS `Profile_Watched_Media` (
     FOREIGN KEY (subtitle_id) REFERENCES `Subtitle` (subtitle_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 15. Create Profile_Watch_List table (depends on Profile, Movie, and Series)
+-- 14. Create Profile_Watch_List table (depends on Profile, Movie, and Series)
 CREATE TABLE IF NOT EXISTS `Profile_Watch_List` (
     list_id INT(11) AUTO_INCREMENT PRIMARY KEY,
     profile_id INT(11) NOT NULL,
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `Profile_Watch_List` (
     FOREIGN KEY (series_id) REFERENCES `Series` (series_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- 16. Create Discounted_Users table (depends on Account)
+-- 15. Create Discounted_Users table (depends on Account)
 CREATE TABLE IF NOT EXISTS `Discounted_Users` (
     account_id INT(11) NOT NULL,
     invited_account_id INT(11) NOT NULL,
@@ -151,20 +151,42 @@ CREATE TABLE IF NOT EXISTS `Discounted_Users` (
 
 CREATE USER 'senior'@'%' IDENTIFIED BY 'password';
 GRANT SELECT ON Netflix.* TO 'senior'@'%';
+FLUSH PRIVILEGES;
 
 CREATE USER 'medior'@'%' IDENTIFIED BY 'password';
-GRANT SELECT ON Netflix.* TO 'medior'@'%';
-REVOKE SELECT ON Netflix.Subscription FROM 'medior'@'%';
-REVOKE SELECT ON Netflix.Discounted_Users FROM 'medior'@'%';
-
+GRANT SELECT ON Netflix.Account TO 'medior'@'%';
+GRANT SELECT ON Netflix.Genre TO 'medior'@'%';
+GRANT SELECT ON Netflix.Language TO 'medior'@'%';
+GRANT SELECT ON Netflix.Media TO 'medior'@'%';
+GRANT SELECT ON Netflix.Media_Quality TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Genre TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Viewing_Classification TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Watched_Media TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Watch_List TO 'medior'@'%';
+GRANT SELECT ON Netflix.Series TO 'medior'@'%';
+GRANT SELECT ON Netflix.Subtitle TO 'medior'@'%';
+GRANT SELECT ON Netflix.Viewing_Classification TO 'medior'@'%';
+FLUSH PRIVILEGES;
 
 CREATE USER 'junior'@'%' IDENTIFIED BY 'password';
-GRANT SELECT ON Netflix.* TO 'junior'@'%';
-REVOKE SELECT ON Netflix.Subscription FROM 'junior'@'%';
-REVOKE SELECT ON Netflix.Discounted_Users FROM 'junior'@'%';
-REVOKE SELECT ON Netflix.Account FROM 'junior'@'%';
+GRANT SELECT ON Netflix.Genre TO 'medior'@'%';
+GRANT SELECT ON Netflix.Language TO 'medior'@'%';
+GRANT SELECT ON Netflix.Media TO 'medior'@'%';
+GRANT SELECT ON Netflix.Media_Quality TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Genre TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Viewing_Classification TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Watched_Media TO 'medior'@'%';
+GRANT SELECT ON Netflix.Profile_Watch_List TO 'medior'@'%';
+GRANT SELECT ON Netflix.Series TO 'medior'@'%';
+GRANT SELECT ON Netflix.Subtitle TO 'medior'@'%';
+GRANT SELECT ON Netflix.Viewing_Classification TO 'medior'@'%';
+FLUSH PRIVILEGES;
 
 CREATE USER 'api'@'%' IDENTIFIED BY 'password';
 --ADD PRIVILIGES HERE WHEN VIEWS AND STORED PROCEDURES ARE DONE
+
+FLUSH PRIVILEGES;
 
 
