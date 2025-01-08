@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: netflix-db
+    restart: no
+    environment:
+      MYSQL_ROOT_PASSWORD: qwerty
+      MYSQL_DATABASE: netflix
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+
+  laravel:
+    build:
+      context: .
+      dockerfile: ./netflix-api/Dockerfile
+    container_name: netflix-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./netflix-api:/var/www/html
+    depends_on:
+      - mariadb
+    environment:
+      DB_HOST: mariadb
+      DB_DATABASE: netflix_api
+      DB_USERNAME: root
+      DB_PASSWORD: qwerty
+    command: >
+      sh -c "/var/www/html/docker/wait-for-it.sh mariadb:3306 -- /var/www/html/docker/entrypoint.sh"    
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: netflix-phpmyadmin
+    restart: no
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: qwerty
+    depends_on:
+      - mariadb
+
+
+volumes:
+  db-data:
