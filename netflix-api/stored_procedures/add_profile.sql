@@ -1,6 +1,6 @@
 DELIMITER //
 CREATE PROCEDURE add_profile (
-    IN account_id INT,
+    IN p_account_id INT,
     IN profile_name VARCHAR(255),
     IN profile_image VARCHAR(255),
     IN profile_age INT,
@@ -13,25 +13,25 @@ BEGIN
 
     SELECT COUNT(*) INTO account_exists
     FROM Account
-    WHERE account_id = account_id;
+    WHERE account_id = p_account_id;
 
     IF account_exists = 0 THEN
         SET result_message = 'Account not found.';
     ELSE
         INSERT INTO Profile (
-            account_id, 
-            profile_name, 
-            profile_image, 
-            profile_age, 
-            profile_lang, 
+            account_id,
+            profile_name,
+            profile_image,
+            profile_age,
+            profile_lang,
             profile_movies_preferred
         )
         VALUES (
-            account_id, 
-            profile_name, 
-            profile_image, 
-            profile_age, 
-            profile_lang, 
+            p_account_id,
+            profile_name,
+            profile_image,
+            profile_age,
+            profile_lang,
             profile_movies_preferred
         );
         SET result_message = 'Profile added successfully.';

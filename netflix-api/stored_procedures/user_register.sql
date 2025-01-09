@@ -16,11 +16,11 @@ BEGIN
         SET result_message = 'Email already exists.';
     ELSE
         INSERT INTO Account (
-            email, 
-            hashed_password, 
-            subscription_id, 
-            blocked, 
-            discount_active, 
+            email,
+            hashed_password,
+            subscription_id,
+            blocked,
+            discount_active,
             billed_from
         )
         VALUES (
@@ -29,7 +29,7 @@ BEGIN
             subscription_id,
             0,
             0,
-            NULL
+            DATE_ADD(CURDATE(), INTERVAL 7 DAY)
         );
 
         SET result_message = 'User registered successfully.';
