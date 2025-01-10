@@ -9,52 +9,52 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\ProfileController12; // Updated to match the controller name
 
-// Dynamic endpoint routing for Main API
-Route::any('/api/{endpoint}', [MainApiController::class, 'routeRequest']);
-
 // UserAccountController Routes
 Route::prefix('user')->group(function () {
-    Route::post('/profile', [UserAccountController::class, 'addProfile'])->middleware('auth:sanctum');
-    Route::put('/subscription', [UserAccountController::class, 'updateSubscription'])->middleware('auth:sanctum');
-    Route::get('/watchlist', [UserAccountController::class, 'getWatchHistory'])->middleware('auth:sanctum');
-    Route::post('/watchlist/add/{mediaId}', [UserAccountController::class, 'manageWatchList'])->middleware('auth:sanctum');
-    Route::delete('/watchlist/remove/{mediaId}', [UserAccountController::class, 'manageWatchList'])->middleware('auth:sanctum');
+    Route::post('/profile', [UserAccountController::class, 'addProfile']);
+    Route::put('/subscription', [UserAccountController::class, 'updateSubscription']);
+    Route::get('/watchlist', [UserAccountController::class, 'getWatchHistory']);
+    Route::post('/watchlist/add/{mediaId}', [UserAccountController::class, 'manageWatchList']);
+    Route::delete('/watchlist/remove/{mediaId}', [UserAccountController::class, 'manageWatchList']);
 });
 
 // AccountController Routes
 Route::prefix('account')->group(function () {
-    Route::post('/login', [AccountController::class, 'login']);
-    Route::post('/logout', [AccountController::class, 'logout'])->middleware('auth:sanctum');
-    Route::post('/register', [AccountController::class, 'register']);
-    Route::post('/reset-password', [AccountController::class, 'resetPassword']);
-    Route::post('/block/{id}', [AccountController::class, 'blockAccount'])->middleware('auth:sanctum');
+    Route::post('/login', [AccountController::class, 'login']);  // No authentication needed
+    Route::post('/register', [AccountController::class, 'register']);  // No authentication needed
+    Route::post('/reset-password', [AccountController::class, 'resetPassword']);  // No authentication needed
+    Route::post('/logout', [AccountController::class, 'logout']);  // No authentication needed
+    Route::post('/block/{id}', [AccountController::class, 'blockAccount']);  // No authentication needed
 });
 
 // TokenController Routes
 Route::prefix('token')->group(function () {
-    Route::post('/generate', [TokenController::class, 'generateToken'])->middleware('auth:sanctum');
-    Route::post('/refresh', [TokenController::class, 'refreshToken'])->middleware('auth:sanctum');
-    Route::post('/revoke', [TokenController::class, 'revokeToken'])->middleware('auth:sanctum');
     Route::post('/validate', [TokenController::class, 'validateToken']);
+    Route::post('/generate', [TokenController::class, 'generateToken']);
+    Route::post('/refresh', [TokenController::class, 'refreshToken']);
+    Route::post('/revoke', [TokenController::class, 'revokeToken']);
 });
 
 // MediaController Routes
 Route::prefix('media')->group(function () {
-    Route::get('/{id}/play', [MediaController::class, 'playMedia'])->middleware('auth:sanctum');
-    Route::post('/{id}/pause', [MediaController::class, 'pauseMedia'])->middleware('auth:sanctum');
-    Route::post('/{id}/resume', [MediaController::class, 'resumeMedia'])->middleware('auth:sanctum');
+    Route::get('/{id}/play', [MediaController::class, 'playMedia']);
+    Route::post('/{id}/pause', [MediaController::class, 'pauseMedia']);
+    Route::post('/{id}/resume', [MediaController::class, 'resumeMedia']);
 });
 
 // SubscriptionController Routes
 Route::prefix('subscription')->group(function () {
-    Route::get('/details', [SubscriptionController::class, 'getSubscriptionDetails'])->middleware('auth:sanctum');
-    Route::put('/update', [SubscriptionController::class, 'updateSubscription'])->middleware('auth:sanctum');
+    Route::get('/details', [SubscriptionController::class, 'getSubscriptionDetails']);
+    Route::put('/update', [SubscriptionController::class, 'updateSubscription']);
 });
 
 // ProfileController12 Routes (Updated)
 Route::prefix('profile')->group(function () {
-    Route::post('/', [ProfileController12::class, 'addProfile'])->middleware('auth:sanctum');
-    Route::put('/preferences', [ProfileController12::class, 'updatePreferences'])->middleware('auth:sanctum');
-    Route::delete('/{id}', [ProfileController12::class, 'deleteProfile'])->middleware('auth:sanctum');
+    Route::post('/', [ProfileController12::class, 'addProfile']);
+    Route::put('/preferences', [ProfileController12::class, 'updatePreferences']);
+    Route::delete('/{id}', [ProfileController12::class, 'deleteProfile']);
 });
+
+// Dynamic endpoint routing for Main API (Place this at the end)
+Route::any('/api/{endpoint}', [MainApiController::class, 'routeRequest']);
 ?>
