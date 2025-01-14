@@ -101,3 +101,4 @@ class TokenController extends Controller
         return response()->json(['valid' => $isValid], 200);
     }
 }
+?>

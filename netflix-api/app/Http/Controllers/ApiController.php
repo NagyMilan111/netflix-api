@@ -3,32 +3,26 @@
 
     use Illuminate\Http\Request;
 
-    class ApiController extends Controller
+    // API Controller
+class ApiController extends Controller
+{
+    public function handleRequest($endpoint, Request $request)
     {
-        public function handleRequest($endpoint, $data)
-        {
-            switch ($endpoint) {
-                case 'user/profile':
-                    $controller = new UserAccountController();
-                    return $controller->addProfile(new Request($data));
-                case 'account/login':
-                    $controller = new AccountController();
-                    return $controller->login(new Request($data));
-                case 'token/generate':
-                    $controller = new TokenController();
-                    return $controller->generateToken($data['userId']);
-                case 'media/play':
-                    $controller = new MediaController();
-                    return $controller->playMedia($data['mediaId']);
-                case 'subscription/details':
-                    $controller = new SubscriptionController();
-                    return $controller->getSubscriptionDetails($data['userId']);
-                case 'profile/update':
-                    $controller = new ProfileController12();
-                    return $controller->updatePreferences(new Request($data));
-                default:
-                    return response()->json(['error' => 'Invalid endpoint'], 404);
-            }
+        switch ($endpoint) {
+            case 'account/login':
+                return app(AccountController::class)->login($request);
+            case 'account/register':
+                return app(AccountController::class)->register($request);
+            case 'token/generate':
+                return app(TokenController::class)->generateToken($request->input('userId'));
+            case 'media/play':
+                return app(MediaController::class)->playMedia($request->input('mediaId'));
+            case 'subscription/details':
+                return app(SubscriptionController::class)->getSubscriptionDetails($request->input('userId'));
+            default:
+                return response()->json(['error' => 'Invalid endpoint'], 404);
         }
     }
+}
+
 ?>

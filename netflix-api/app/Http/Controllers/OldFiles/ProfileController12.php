@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class ProfileController extends Controller
+class ProfileController12 extends Controller
 {
     /**
      * Add a new profile for an account.
@@ -21,15 +21,15 @@ class ProfileController extends Controller
         ]);
 
         // Insert the profile into the database
-        DB::table('Profile')->insert([
-            'account_id' => $validatedData['account_id'],
-            'profile_name' => $validatedData['profile_name'],
-            'profile_image' => 'placeholder.jpeg', // Default profile image
-            'profile_age' => $validatedData['profile_age'],
-            'profile_lang' => $validatedData['profile_lang'],
-            'profile_movies_preferred' => 0, // Default value
-            'created_at' => now(),
-            'updated_at' => now(),
+        DB::insert('
+            INSERT INTO Profile (account_id, profile_name, profile_image, profile_age, profile_lang, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+        ', [
+            $validatedData['account_id'],
+            $validatedData['profile_name'],
+            'placeholder.jpeg', // Default profile image
+            $validatedData['profile_age'],
+            $validatedData['profile_lang'],
         ]);
 
         return response()->json(['message' => 'Profile added successfully'], 201);
@@ -47,9 +47,13 @@ class ProfileController extends Controller
         ]);
 
         // Update preferences in the database
-        $updated = DB::table('Profile')->where('profile_id', $validatedData['profile_id'])->update([
-            'profile_movies_preferred' => $validatedData['profile_movies_preferred'] ?? 0,
-            'updated_at' => now(),
+        $updated = DB::update('
+            UPDATE Profile
+            SET profile_movies_preferred = ?, updated_at = NOW()
+            WHERE profile_id = ?
+        ', [
+            $validatedData['profile_movies_preferred'] ?? 0,
+            $validatedData['profile_id'],
         ]);
 
         if (!$updated) {
@@ -72,8 +76,9 @@ class ProfileController extends Controller
         }
 
         // Delete the profile from the database
-        DB::table('Profile')->where('profile_id', $id)->delete();
+        DB::delete('DELETE FROM Profile WHERE profile_id = ?', [$id]);
 
         return response()->json(['message' => 'Profile deleted successfully'], 200);
     }
 }
+?>

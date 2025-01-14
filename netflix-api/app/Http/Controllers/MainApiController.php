@@ -1,15 +1,14 @@
 <?php
-    namespace App\Http\Controllers;
 
-    use Illuminate\Http\Request;
+namespace App\Http\Controllers;
 
-    class MainApiController extends Controller
+use Illuminate\Http\Request;
+
+class MainApiController extends Controller
+{
+    public function routeRequest(Request $request, $endpoint)
     {
-        public function routeRequest($endpoint, Request $request)
-        {
-            // Centralized API request router
-            $apiController = new ApiController();
-            return $apiController->handleRequest($endpoint, $request->all());
-        }
+        $apiController = new ApiController();
+        return $apiController->handleRequest($endpoint, $request);
     }
-?>
+}
