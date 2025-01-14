@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Crypt;
 
 class AccountController extends Controller
 {
@@ -13,58 +14,66 @@ class AccountController extends Controller
      * Login a user and return a token.
      */
     public function login(Request $request)
-{
-    try {
-        $credentials = $request->only('email', 'password');
+    {
+        try {
+            $credentials = $request->only('email', 'password');
 
-        // Validate input
-        $validator = Validator::make($credentials, [
-            'email' => 'required|email',
-            'password' => 'required|string|min:8',
-        ]);
+            // Validate input
+            $validator = Validator::make($credentials, [
+                'email' => 'required|email',
+                'password' => 'required|string|min:8',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+            $email = $request->input('email');
+            $password = $request->input('password');
+            $password = Crypt::encrypt($password);
 
-        // Fetch user from the database
-        $user = DB::table('Account')->where('email', $credentials['email'])->first();
+            // Fetch user from the database
+            $result = DB::statement('CALL User_Login(?, ?)', $email, $password);
+            if ($result == 'User Login Successful') {
+                return response()->json(['success' => $request], 200);
+            }
+            if ($result == 'User not found.') {
+                return response()->json(['error' => $request], 404);
+            }
 
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 404);
-        }
+            // Verify the password
+            if ($result == 'Incorrect password.') {
+                return response()->json(['error' => $request], 401);
+            }
 
-        // Verify the password
-        if (!Hash::check($credentials['password'], $user->hashed_password)) {
-            return response()->json(['error' => 'Invalid password'], 401);
-        }
+            if ($result == 'User is blocked.') {
+                return response()->json(['error' => $request], 401);
+            }
+            /*  this should be made into a stored procedure
+            // Generate a token
+            $token = bin2hex(random_bytes(40));
 
-        // Generate a token
-        $token = bin2hex(random_bytes(40));
-
-        // Store the token in the database
-        DB::table('tokens')->insert([
-            'account_id' => $user->account_id,
-            'token' => $token,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return response()->json([
-            'token' => $token,
-            'user' => [
+            // Store the token in the database
+            DB::table('tokens')->insert([
                 'account_id' => $user->account_id,
-                'email' => $user->email,
-                'subscription_id' => $user->subscription_id,
-                'billed_from' => $user->billed_from,
-            ],
-            'message' => 'Login successful',
-        ], 200);
-    } catch (\Exception $e) {
-        \Log::error('Login Error: ' . $e->getMessage());
-        return response()->json(['error' => 'Internal Server Error'], 500);
+                'token' => $token,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            return response()->json([
+                'token' => $token,
+                'user' => [
+                    'account_id' => $user->account_id,
+                    'email' => $user->email,
+                    'subscription_id' => $user->subscription_id,
+                    'billed_from' => $user->billed_from,
+                ],
+                'message' => 'Login successful',
+            ], 200); */
+        } catch (\Exception $e) {
+            \Log::error('Login Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
+        }
     }
-}
 
     /**
      * Register a new user.
@@ -75,7 +84,6 @@ class AccountController extends Controller
             $validator = Validator::make($request->all(), [
                 'email' => 'required|string|email|max:255|unique:Account,email',
                 'password' => 'required|string|min:8|confirmed',
-                'billed_from' => 'required|date',
                 'subscription_id' => 'required|integer|exists:Subscription,subscription_id',
             ]);
 
@@ -85,23 +93,19 @@ class AccountController extends Controller
 
             // Hash the password
             $hashedPassword = Hash::make($request->password);
+            $subscriptionId = $request->input('subscription_id');
+            $email = $request->input('email');
 
-            // Create the user in the database
-            $accountId = DB::table('Account')->insertGetId([
-                'email' => $request->email,
-                'hashed_password' => $hashedPassword,
-                'billed_from' => $request->billed_from,
-                'subscription_id' => $request->subscription_id,
-                'blocked' => 0,
-                'discount_active' => 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return response()->json([
-                'message' => 'User registered successfully.',
-                'account_id' => $accountId,
-            ], 201);
+            $result = DB::statement('CALL Register_User(?, ?, ?)', $email, $hashedPassword, $subscriptionId);
+            if ($result == 'User registered successfully.') {
+                return response()->json([
+                    'message' => 'User registered successfully.',
+                ], 201);
+            } elseif ($result == 'Email already exists.') {
+                return response()->json([
+                    'message' => 'Email already exists.',
+                ], 401);
+            }
         } catch (\Exception $e) {
             \Log::error('Register Error: ' . $e->getMessage());
             return response()->json(['error' => 'Internal Server Error'], 500);
@@ -170,10 +174,15 @@ class AccountController extends Controller
                 return response()->json(['error' => 'Invalid token or email'], 400);
             }
 
-            // Update the password
-            DB::table('Account')->where('email', $request->email)->update([
-                'hashed_password' => Hash::make($request->password),
-            ]);
+            $password = $request->input('password');
+            $email = $request->input('email');
+
+            $password = Crypt::encrypt($password);
+            //Make this work with tokens somehow
+            $result = DB::statement('CALL Update_Password(?, ?)', $email, $password);
+            if ($result == 'Password updated successfully.') {
+                return response()->json(['message' => $result], 200);
+            }
 
             // Delete the reset token
             DB::table('password_resets')->where('email', $request->email)->delete();
@@ -188,35 +197,22 @@ class AccountController extends Controller
     /**
      * Block an account by its ID.
      */
-    public function blockAccount($id)
-{
-    try {
-        // Check if the account exists
-        $account = DB::table('Account')->where('account_id', $id)->first();
+    public function blockAccount($email)
+    {
+        try {
+            $result = DB::statement('CALL Block_User(?)', $email);
 
-        if (!$account) {
-            return response()->json(['message' => 'Account not found'], 404);
+            if ($result == 'User successfully blocked.') {
+                return response()->json(['message' => $result], 200);
+            } elseif ($result == 'User not found.') {
+                return response()->json(['error' => $result], 500);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Block Account Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal Server Error'], 500);
         }
-
-        // Check if the account is already blocked
-        if ($account->blocked == 1) {
-            return response()->json(['message' => 'Account is already blocked'], 200);
-        }
-
-        // Update the account to set it as blocked
-        $updated = DB::table('Account')->where('account_id', $id)->update(['blocked' => 1]);
-
-        if ($updated) {
-            return response()->json(['message' => 'Account blocked successfully'], 200);
-        }
-
-        return response()->json(['error' => 'Failed to block the account'], 500);
-    } catch (\Exception $e) {
-        \Log::error('Block Account Error: ' . $e->getMessage());
-        return response()->json(['error' => 'Internal Server Error'], 500);
     }
-}
-
 
 
 }

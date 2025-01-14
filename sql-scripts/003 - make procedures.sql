@@ -368,11 +368,11 @@ CREATE PROCEDURE User_Login (
 )
 BEGIN
     DECLARE user_exists INT;
-    DECLARE stored_password_hash VARCHAR(255);
+    DECLARE hashed_password VARCHAR(255);
     DECLARE user_blocked INT;
 
-    SELECT COUNT(*), password, blocked
-    INTO user_exists, stored_password_hash, user_blocked
+    SELECT COUNT(*), hashed_password, blocked
+    INTO user_exists, hashed_password, user_blocked
     FROM Account
     WHERE email = user_email;
 
@@ -382,7 +382,7 @@ BEGIN
     ELSEIF user_blocked = 1 THEN
         SET result_message = 'User is blocked.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
-    ELSEIF stored_password_hash != user_password THEN -- Replace with proper hashing check in practice
+    ELSEIF hashed_password != user_password THEN -- Replace with proper hashing check in practice
         SET result_message = 'Incorrect password.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
