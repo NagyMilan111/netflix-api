@@ -70,7 +70,6 @@ class AccountController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email|max:255|unique:Account,email',
             'password' => 'required|string|min:8|confirmed',
-            'billed_from' => 'required|date',
             'subscription_id' => 'required|integer|exists:Subscription,subscription_id',
         ]);
 
