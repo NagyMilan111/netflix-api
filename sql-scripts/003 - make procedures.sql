@@ -95,14 +95,14 @@ BEGIN
     DECLARE watchlist_exists INT;
 
     SELECT COUNT(*) INTO watchlist_exists
-    FROM Watchlist
+    FROM Profile_Watch_List
     WHERE profile_id = p_profile_id AND media_id = media_id AND series_id = series_id;
 
     IF watchlist_exists > 0 THEN
         SET result_message = 'Watchlist already exists for this profile.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        INSERT INTO Watchlist (profile_id, media_id, series_id)
+        INSERT INTO Profile_Watch_List (profile_id, media_id, series_id)
         VALUES (p_profile_id, media_id, series_id);
         SET result_message = 'Watchlist added successfully.';
     END IF;
