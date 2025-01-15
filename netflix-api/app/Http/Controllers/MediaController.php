@@ -19,7 +19,7 @@ class MediaController extends Controller
             return response()->json(['error' => 'Media not found'], 404);
         }
 
-        // Log play action (for analytics or user tracking)
+        // Logic to log play action
         DB::table('Profile_Watched_Media')->updateOrInsert(
             [
                 'profile_id' => $request->profile_id,
@@ -34,6 +34,7 @@ class MediaController extends Controller
 
         return response()->json(['message' => 'Media is playing', 'media_id' => $id]);
     }
+
 
     /**
      * Pause media.

@@ -9,15 +9,16 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+    public function up(): void
     {
         Schema::create('subscriptions', function (Blueprint $table) {
-            $table->id('subscription_id');
-            $table->string('subscription_name')->unique();
-            $table->decimal('subscription_price', 8, 2)->default(0);
-            $table->timestamps();
+            $table->id('subscription_id'); // Primary key
+            $table->string('subscription_name')->unique(); // Subscription name must be unique
+            $table->decimal('subscription_price', 8, 2)->default(0); // Price with default value
+            $table->timestamps(); // Created_at and updated_at timestamps
         });
     }
+
     /**
      * Reverse the migrations.
      */
