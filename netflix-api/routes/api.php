@@ -9,7 +9,8 @@ use App\Http\Controllers\{
     SubscriptionController,
     TokenController,
     ExternalApiController,
-    EpisodeController
+    EpisodeController,
+    SeriesController
 };
 
 // API Routes
@@ -64,4 +65,12 @@ Route::prefix('episodes')->group(function () {
     Route::post('/', [EpisodeController::class, 'store']); // Create a new episode
     Route::put('/{id}', [EpisodeController::class, 'update'])->whereNumber('id'); // Update an episode
     Route::delete('/{id}', [EpisodeController::class, 'destroy'])->whereNumber('id'); // Delete an episode
+});
+
+Route::prefix('series')->group(function () {
+    Route::get('/', [SeriesController::class, 'index']);         // List all series
+    Route::get('/{id}', [SeriesController::class, 'show']);      // Show a specific series
+    Route::post('/', [SeriesController::class, 'store']);        // Create a new series
+    Route::put('/{id}', [SeriesController::class, 'update']);    // Update an existing series
+    Route::delete('/{id}', [SeriesController::class, 'destroy']);// Delete a series
 });
