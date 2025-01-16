@@ -11,18 +11,16 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('episodes', function (Blueprint $table) {
-            $table->id('episode_id');
-            $table->unsignedBigInteger('series_id'); // Ensure it's unsigned
-            $table->foreign('series_id')
-                ->references('id')
-                ->on('series')
-                ->onDelete('cascade'); // Optional: Cascade delete if the series is deleted
-            $table->string('title');
-            $table->timestamps();
-        });
-        
+        if (!Schema::hasTable('episodes')) {
+            Schema::create('episodes', function (Blueprint $table) {
+                $table->id('episode_id');
+                $table->foreignId('series_id')->constrained('series')->onDelete('cascade');
+                $table->string('title');
+                $table->timestamps();
+            });
+        }
     }
+    
 
     /**
      * Reverse the migrations.

@@ -12,22 +12,27 @@ class MediaController extends Controller
      */
     public function playMedia($id, Request $request)
     {
-        // Validate that media exists
-        $media = DB::table('Media')->where('media_id', $id)->first();
+        // Validate that the media exists
+        $media = DB::table('medias')->where('media_id', $id)->first();
 
         if (!$media) {
             return response()->json(['error' => 'Media not found'], 404);
         }
 
-        // Logic to log play action
-        DB::table('Profile_Watched_Media')->updateOrInsert(
+        // Validate the profile ID
+        $request->validate([
+            'profile_id' => 'required|integer|exists:profiles,profile_id',
+        ]);
+
+        // Log play action
+        DB::table('profiles_watched_medias')->updateOrInsert(
             [
                 'profile_id' => $request->profile_id,
                 'media_id' => $id,
             ],
             [
                 'pause_spot' => '00:00:00',
-                'times_watched' => DB::raw('times_watched + 1'),
+                'times_watched' => DB::raw('IFNULL(times_watched, 0) + 1'),
                 'last_watch_date' => now(),
             ]
         );
@@ -35,19 +40,18 @@ class MediaController extends Controller
         return response()->json(['message' => 'Media is playing', 'media_id' => $id]);
     }
 
-
     /**
      * Pause media.
      */
     public function pauseMedia($id, Request $request)
     {
         $validatedData = $request->validate([
-            'profile_id' => 'required|integer|exists:Profile,profile_id',
+            'profile_id' => 'required|integer|exists:profiles,profile_id',
             'pause_spot' => 'required|string',
         ]);
 
         // Update pause spot for the given media
-        $updated = DB::table('Profile_Watched_Media')->where([
+        $updated = DB::table('profiles_watched_medias')->where([
             'profile_id' => $validatedData['profile_id'],
             'media_id' => $id,
         ])->update(['pause_spot' => $validatedData['pause_spot']]);
@@ -65,14 +69,19 @@ class MediaController extends Controller
     public function resumeMedia($id, Request $request)
     {
         // Validate that the media exists
-        $media = DB::table('Media')->where('media_id', $id)->first();
+        $media = DB::table('medias')->where('media_id', $id)->first();
 
         if (!$media) {
             return response()->json(['error' => 'Media not found'], 404);
         }
 
+        // Validate the profile ID
+        $request->validate([
+            'profile_id' => 'required|integer|exists:profiles,profile_id',
+        ]);
+
         // Fetch the last pause spot
-        $watchData = DB::table('Profile_Watched_Media')->where([
+        $watchData = DB::table('profiles_watched_medias')->where([
             'profile_id' => $request->profile_id,
             'media_id' => $id,
         ])->first();

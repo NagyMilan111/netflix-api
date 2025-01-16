@@ -8,7 +8,7 @@ use App\Models\Token;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\DB;
 
 class AccountController extends Controller
 {
@@ -37,8 +37,14 @@ class AccountController extends Controller
                 return response()->json(['error' => 'User not found'], 404);
             }
 
-            // Verify the password
+            // Check if the password is hashed using Bcrypt
             if (!Hash::check($credentials['password'], $user->hashed_password)) {
+                // If password is not hashed correctly, rehash and update it
+                if (!Hash::check($credentials['password'], $user->hashed_password)) {
+                    $user->update([
+                        'hashed_password' => Hash::make($credentials['password']),
+                    ]);
+                }
                 return response()->json(['error' => 'Invalid password'], 401);
             }
 
@@ -66,6 +72,7 @@ class AccountController extends Controller
             return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }
+
 
     /**
      * Register a new user.
