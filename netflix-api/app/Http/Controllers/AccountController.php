@@ -32,21 +32,21 @@ class AccountController extends Controller
             $password = Crypt::encrypt($password);
 
             // Fetch user from the database
-            $result = DB::statement('CALL User_Login(?, ?)', $email, $password);
-            if ($result == 'User Login Successful') {
-                return response()->json(['success' => $request], 200);
+            $result = DB::select('CALL User_Login(?, ?)', [$email, $password]);
+            if ($result[2] == 'User Login Successful') {
+                return response()->json(['success' => $request[2]], 200);
             }
-            if ($result == 'User not found.') {
-                return response()->json(['error' => $request], 404);
+            if ($result[2] == 'User not found.') {
+                return response()->json(['error' => $request[2]], 404);
             }
 
             // Verify the password
-            if ($result == 'Incorrect password.') {
-                return response()->json(['error' => $request], 401);
+            if ($result[2] == 'Incorrect password.') {
+                return response()->json(['error' => $request[2]], 401);
             }
 
-            if ($result == 'User is blocked.') {
-                return response()->json(['error' => $request], 401);
+            if ($result[2] == 'User is blocked.') {
+                return response()->json(['error' => $request[2]], 401);
             }
             /*  this should be made into a stored procedure
             // Generate a token
@@ -96,8 +96,8 @@ class AccountController extends Controller
             $subscriptionId = $request->input('subscription_id');
             $email = $request->input('email');
 
-            $result = DB::statement('CALL Register_User(?, ?, ?)', $email, $hashedPassword, $subscriptionId);
-            if ($result == 'User registered successfully.') {
+            $result = DB::select('CALL Register_User(?, ?, ?)', [$email, $hashedPassword, $subscriptionId]);
+            if ($result[3] == 'User registered successfully.') {
                 return response()->json([
                     'message' => 'User registered successfully.',
                 ], 201);
@@ -179,9 +179,9 @@ class AccountController extends Controller
 
             $password = Crypt::encrypt($password);
             //Make this work with tokens somehow
-            $result = DB::statement('CALL Update_Password(?, ?)', $email, $password);
-            if ($result == 'Password updated successfully.') {
-                return response()->json(['message' => $result], 200);
+            $result = DB::select('CALL Update_Password(?, ?)', $email, $password);
+            if ($result[2] == 'Password updated successfully.') {
+                return response()->json(['message' => $result[2]], 200);
             }
 
             // Delete the reset token

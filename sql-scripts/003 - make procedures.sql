@@ -524,3 +524,197 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Update_Pause_Spot(
+    IN input_profile_id INT,
+    IN input_media_id INT,
+    IN input_pause_spot VARCHAR(255)
+)
+BEGIN
+    DECLARE row_count INT;
+
+    -- Validate the profile_id
+    IF NOT EXISTS (SELECT 1 FROM Profile WHERE profile_id = input_profile_id) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Invalid profile_id.';
+    END IF;
+
+    -- Update the pause_spot for the given media
+    UPDATE Profile_Watched_Media
+    SET pause_spot = input_pause_spot
+    WHERE profile_id = input_profile_id AND media_id = input_media_id;
+
+    -- Check if any row was updated
+    SET row_count = ROW_COUNT();
+
+    IF row_count = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Failed to update pause spot or media not found.';
+    END IF;
+
+    -- Success message
+    SELECT 'Media paused.' AS message, input_pause_spot AS pause_spot;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Fetch_Pause_Spot(
+    IN input_profile_id INT,
+    IN input_media_id INT
+)
+BEGIN
+    DECLARE pause_spot VARCHAR(255);
+    DECLARE media_exists INT;
+
+    -- Validate that the media exists
+    SELECT COUNT(*) INTO media_exists
+    FROM Media
+    WHERE media_id = input_media_id;
+
+    IF media_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Media not found.';
+    END IF;
+
+    -- Fetch the last pause spot
+    SELECT pause_spot INTO pause_spot
+    FROM Profile_Watched_Media
+    WHERE profile_id = input_profile_id AND media_id = input_media_id;
+
+    -- Check if the watch data exists
+    IF pause_spot IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No watch data found for the profile and media.';
+    END IF;
+
+    -- Success message
+    SELECT 'Media resumed.' AS message, pause_spot AS resume_at;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Log_Play_Action(
+    IN input_profile_id INT,
+    IN input_media_id INT
+)
+BEGIN
+    DECLARE media_exists INT;
+
+    -- Validate that the media exists
+    SELECT COUNT(*) INTO media_exists
+    FROM Media
+    WHERE media_id = input_media_id;
+
+    IF media_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Media not found.';
+    END IF;
+
+    -- Log play action with update or insert
+    INSERT INTO Profile_Watched_Media (profile_id, media_id, pause_spot, last_watch_date)
+    VALUES (input_profile_id, input_media_id, '00:00:00', NOW())
+    ON DUPLICATE KEY UPDATE
+                         pause_spot = '00:00:00',
+                         last_watch_date = NOW();
+
+    -- Success message
+    SELECT 'Media is playing.' AS message, input_media_id AS media_id;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Update_Profile_Preferences(
+    IN input_profile_id INT,
+    IN input_profile_movies_preferred BOOLEAN
+)
+BEGIN
+    DECLARE profile_exists INT;
+    DECLARE rows_affected INT;
+
+    -- Validate that the profile exists
+    SELECT COUNT(*) INTO profile_exists
+    FROM Profile
+    WHERE profile_id = input_profile_id;
+
+    IF profile_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Profile not found.';
+    END IF;
+
+    -- Update preferences in the database
+    UPDATE Profile
+    SET profile_movies_preferred = COALESCE(input_profile_movies_preferred, 0)
+    WHERE profile_id = input_profile_id;
+
+    -- Check if any row was updated
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Failed to update preferences.';
+    END IF;
+
+    -- Success message
+    SELECT 'Preferences updated successfully.' AS message;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Update_User_Subscription(
+    IN input_user_id INT,
+    IN input_subscription_id INT,
+)
+BEGIN
+    DECLARE account_exists INT;
+    DECLARE subscription_exists INT;
+    DECLARE rows_affected INT;
+
+    -- Validate that the user exists
+    SELECT COUNT(*) INTO account_exists
+    FROM Account
+    WHERE account_id = input_user_id;
+
+    IF account_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'User not found.';
+    END IF;
+
+    -- Validate that the subscription exists
+    SELECT COUNT(*) INTO subscription_exists
+    FROM Subscription
+    WHERE subscription_id = input_subscription_id;
+
+    IF subscription_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Subscription not found.';
+    END IF;
+
+    -- Update the subscription details for the given user
+    UPDATE Account
+    SET
+        subscription_id = input_subscription_id
+    WHERE account_id = input_user_id;
+
+    -- Check if any row was updated
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Failed to update subscription.';
+    END IF;
+
+    -- Success message
+    SELECT 'Subscription updated successfully.' AS message;
+END //
+
+DELIMITER ;

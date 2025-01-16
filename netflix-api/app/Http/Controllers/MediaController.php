@@ -10,76 +10,58 @@ class MediaController extends Controller
     /**
      * Play media.
      */
-    public function playMedia($id, Request $request)
+    public function playMedia(Request $request)
     {
-        // Validate that media exists
-        $media = DB::table('Media')->where('media_id', $id)->first();
+        $profile_id = $request->input('profile_id');
+        $media_id = $request->input('media_id');
 
-        if (!$media) {
-            return response()->json(['error' => 'Media not found'], 404);
+        $result = DB::select('CALL Log_Play_Action(?, ?)', [$profile_id, $media_id]);
+        if ($result[0] == 'Media is playing.') {
+            return response()->json(['message' => 'Media is playing.', 'media_id' => $media_id]);
         }
-
-        // Log play action (for analytics or user tracking)
-        DB::table('Profile_Watched_Media')->updateOrInsert(
-            [
-                'profile_id' => $request->profile_id,
-                'media_id' => $id,
-            ],
-            [
-                'pause_spot' => '00:00:00',
-                'times_watched' => DB::raw('times_watched + 1'),
-                'last_watch_date' => now(),
-            ]
-        );
-
-        return response()->json(['message' => 'Media is playing', 'media_id' => $id]);
+        else{
+            return response()->json(['message' => $result[0], 'media_id' => $media_id]);
+        }
     }
 
     /**
      * Pause media.
      */
-    public function pauseMedia($id, Request $request)
+    public function pauseMedia(Request $request)
     {
         $validatedData = $request->validate([
             'profile_id' => 'required|integer|exists:Profile,profile_id',
+            'media_id' => 'required|integer|exists:Media,media_id',
             'pause_spot' => 'required|string',
         ]);
 
-        // Update pause spot for the given media
-        $updated = DB::table('Profile_Watched_Media')->where([
-            'profile_id' => $validatedData['profile_id'],
-            'media_id' => $id,
-        ])->update(['pause_spot' => $validatedData['pause_spot']]);
+        $profile_id = $request->input('profile_id');
+        $pause_spot = $request->input('pause_spot');
+        $media_id = $request->input('media_id');
 
-        if (!$updated) {
-            return response()->json(['error' => 'Failed to update pause spot or media not found'], 404);
+        $result = DB::select('CALL Update_Pause_Spot(?, ?, ?)', [$profile_id, $media_id, $pause_spot]);
+
+        if ($result[0] != 'Media paused.') {
+            return response()->json(['error' => $result[0]], 404);
         }
 
-        return response()->json(['message' => 'Media paused', 'pause_spot' => $validatedData['pause_spot']]);
+        return response()->json(['message' => 'Media paused.', 'pause_spot' => $validatedData['pause_spot']]);
     }
 
     /**
      * Resume media.
      */
-    public function resumeMedia($id, Request $request)
+    public function resumeMedia(Request $request)
     {
-        // Validate that the media exists
-        $media = DB::table('Media')->where('media_id', $id)->first();
+        $profile_id = $request->input('profile_id');
+        $media_id = $request->input('media_id');
 
-        if (!$media) {
-            return response()->json(['error' => 'Media not found'], 404);
+        $result = DB::select('CALL Fetch_Pause_Spot(?, ?)', [$profile_id, $media_id]);
+
+        if ($result[0] != 'Media resumed.') {
+            return response()->json(['error' => $result[0]], 404);
         }
 
-        // Fetch the last pause spot
-        $watchData = DB::table('Profile_Watched_Media')->where([
-            'profile_id' => $request->profile_id,
-            'media_id' => $id,
-        ])->first();
-
-        if (!$watchData) {
-            return response()->json(['error' => 'No watch data found for the profile and media'], 404);
-        }
-
-        return response()->json(['message' => 'Media resumed', 'resume_at' => $watchData->pause_spot]);
+        return response()->json(['message' => 'Media resumed.', 'resume_at' => $result[1]]);
     }
 }

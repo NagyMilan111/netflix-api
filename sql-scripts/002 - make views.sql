@@ -261,3 +261,16 @@ GROUP BY
 ORDER BY 
     TimesWatched DESC;
 SELECT * FROM Get_Top_Ten_Watched_Series LIMIT 10;
+
+CREATE VIEW Get_Subscription_Details AS
+SELECT
+    a.account_id,
+    s.subscription_name,
+    s.subscription_price,
+    a.billed_from,
+    a.discount_active
+FROM
+    Account AS a
+        JOIN
+    Subscription AS s ON a.subscription_id = s.subscription_id;
+

@@ -20,19 +20,21 @@ class ProfileController extends Controller
             'profile_lang' => 'required|integer|exists:Language,lang_id',
         ]);
 
-        // Insert the profile into the database
-        DB::table('Profile')->insert([
-            'account_id' => $validatedData['account_id'],
-            'profile_name' => $validatedData['profile_name'],
-            'profile_image' => 'placeholder.jpeg', // Default profile image
-            'profile_age' => $validatedData['profile_age'],
-            'profile_lang' => $validatedData['profile_lang'],
-            'profile_movies_preferred' => 0, // Default value
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $account_id = $validatedData['account_id'];
+        $profile_name = $validatedData['profile_name'];
+        $profile_age = $validatedData['profile_age'];
+        $profile_lang = $validatedData['profile_lang'];
+        $profile_image = $request->input('profile_image');
+        $profile_movies_preferred = $request->input('profile_movies_preferred');
 
-        return response()->json(['message' => 'Profile added successfully'], 201);
+        $result = DB::select('CALL Add_Profile(?, ?, ?, ?, ?, ?)', [$account_id, $profile_name, $profile_image,
+            $profile_age, $profile_lang, $profile_movies_preferred]);
+
+        if ($result[6] == 'Profile_Added_Successfully') {
+            return response()->json(['message' => 'Profile added successfully.'], 201);
+        } else {
+            return response()->json(['message' => $result[6]], 404);
+        }
     }
 
     /**
@@ -46,34 +48,33 @@ class ProfileController extends Controller
             'profile_movies_preferred' => 'nullable|boolean',
         ]);
 
-        // Update preferences in the database
-        $updated = DB::table('Profile')->where('profile_id', $validatedData['profile_id'])->update([
-            'profile_movies_preferred' => $validatedData['profile_movies_preferred'] ?? 0,
-            'updated_at' => now(),
-        ]);
+        $result = DB::select('CALL Update_Profile_Preferences(?)', [$request->input('profile_id')]);
 
-        if (!$updated) {
-            return response()->json(['error' => 'Failed to update preferences'], 500);
+        if ($result[0] == 'Preferences updated successfully.') {
+            return response()->json(['message' => 'Preferences updated successfully.'], 200);
+
+        } else if ($result[0] == 'Failed to update preferences.') {
+            return response()->json(['error' => 'Failed to update preferences.'], 500);
         }
-
-        return response()->json(['message' => 'Preferences updated successfully'], 200);
+        else {
+            return response()->json(['message' => $result[0]], 404);
+        }
     }
 
     /**
      * Delete a profile by its ID.
      */
-    public function deleteProfile($id)
+    public function deleteProfile(Request $request)
     {
-        // Check if the profile exists
-        $profile = DB::table('Profile')->where('profile_id', $id)->first();
+        $profile_id = $request->input('profile_id');
 
-        if (!$profile) {
-            return response()->json(['error' => 'Profile not found'], 404);
+        $result = DB::select('CALL Delete_Profile(?)', [$profile_id]);
+
+        if($result[1] == 'Profile removed successfully.') {
+            return response()->json(['message' => $result[1]], 200);
         }
-
-        // Delete the profile from the database
-        DB::table('Profile')->where('profile_id', $id)->delete();
-
-        return response()->json(['message' => 'Profile deleted successfully'], 200);
+        else {
+            return response()->json(['message' => $result[1]], 404);
+        }
     }
 }
