@@ -21,6 +21,9 @@ Route::prefix('account')->group(function () {
     Route::post('/reset-password', [AccountController::class, 'resetPassword']);
     Route::post('/logout', [AccountController::class, 'logout']);
     Route::post('/block/{id}', [AccountController::class, 'blockAccount'])->whereNumber('id');
+    Route::delete('/{id}', [AccountController::class, 'deleteProfile'])->whereNumber('id');
+    Route::post('/', [AccountController::class, 'addProfile']);
+
 });
 
 // Media Routes
@@ -32,9 +35,9 @@ Route::prefix('media')->group(function () {
 
 // Profile Routes
 Route::prefix('profile')->group(function () {
-    Route::post('/', [ProfileController::class, 'addProfile']);
     Route::put('/preferences', [ProfileController::class, 'updatePreferences']);
-    Route::delete('/{id}', [ProfileController::class, 'deleteProfile'])->whereNumber('id');
+    Route::get('/{id}/toWatch', [ProfileController::class, 'getToWatchList'])->whereNumber('id');
+    Route::put('/{id}/updateWatchList', [ProfileController::class, 'manageWatchList'])->whereNumber('id');
 });
 
 // Subscription Routes

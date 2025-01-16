@@ -7,33 +7,6 @@ use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
-    /**
-     * Add a new profile for an account.
-     */
-    public function addProfile(Request $request)
-    {
-        // Validate the request
-        $validatedData = $request->validate([
-            'account_id' => 'required|integer|exists:Account,account_id',
-            'profile_name' => 'required|string|max:255',
-            'profile_age' => 'required|integer|min:1',
-            'profile_lang' => 'required|integer|exists:Language,lang_id',
-        ]);
-
-        // Insert the profile into the database
-        DB::table('Profile')->insert([
-            'account_id' => $validatedData['account_id'],
-            'profile_name' => $validatedData['profile_name'],
-            'profile_image' => 'placeholder.jpeg', // Default profile image
-            'profile_age' => $validatedData['profile_age'],
-            'profile_lang' => $validatedData['profile_lang'],
-            'profile_movies_preferred' => 0, // Default value
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return response()->json(['message' => 'Profile added successfully'], 201);
-    }
 
     /**
      * Update preferences for a profile.
@@ -46,34 +19,72 @@ class ProfileController extends Controller
             'profile_movies_preferred' => 'nullable|boolean',
         ]);
 
-        // Update preferences in the database
-        $updated = DB::table('Profile')->where('profile_id', $validatedData['profile_id'])->update([
-            'profile_movies_preferred' => $validatedData['profile_movies_preferred'] ?? 0,
-            'updated_at' => now(),
-        ]);
+        $result = DB::select('CALL Update_Profile_Preferences(?)', [$request->input('profile_id')]);
 
-        if (!$updated) {
-            return response()->json(['error' => 'Failed to update preferences'], 500);
+        if ($result[0] == 'Preferences updated successfully.') {
+            return response()->json(['message' => 'Preferences updated successfully.'], 200);
+
+        } else if ($result[0] == 'Failed to update preferences.') {
+            return response()->json(['error' => 'Failed to update preferences.'], 500);
         }
-
-        return response()->json(['message' => 'Preferences updated successfully'], 200);
+        else {
+            return response()->json(['message' => $result[0]], 404);
+        }
     }
 
     /**
-     * Delete a profile by its ID.
+     * Get a user's watchlist.
      */
-    public function deleteProfile($id)
+    public function getToWatchList(Request $request)
     {
-        // Check if the profile exists
-        $profile = DB::table('Profile')->where('profile_id', $id)->first();
 
-        if (!$profile) {
-            return response()->json(['error' => 'Profile not found'], 404);
+        $profile_id = $request->input('profile_id');
+        // Fetch watchlist for the given account
+        $toWatch = DB::select('CALL Get_Watch_List(?)', [$profile_id]);
+        if($toWatch != null) {
+            return response()->json(['watchHistory' => $toWatch], 200);
+        }
+        else {
+            return response()->json(['error' => 'Watch List not found.'], 404);
         }
 
-        // Delete the profile from the database
-        DB::table('Profile')->where('profile_id', $id)->delete();
-
-        return response()->json(['message' => 'Profile deleted successfully'], 200);
     }
+
+    /**
+     * Manage a user's watchlist (add or remove media).
+     */
+    public function manageWatchList($mediaId, $seriesId, Request $request)
+    {
+        // Validate input
+        $validatedData = $request->validate([
+            'profile_id' => 'required|integer|exists:Profile,profile_id',
+            'action' => 'required|in:add,remove',
+        ]);
+
+        if ($validatedData['action'] === 'add') {
+            // Add media to the watchlist
+            $result = DB::select('CALL Insert_Into_Watch_List(?, ?, ?)', [$validatedData['profile_id'], $mediaId, $seriesId]);
+            if($result[0] == 'Row inserted into Profile_Watch_List successfully.') {
+                return response()->json(['message' => 'Media added to watchlist.']);
+            }
+            else
+            {
+                return response()->json(['message' => 'Something went wrong'], 500);
+            }
+        } else {
+            // Remove media from the watchlist
+            $result = DB::select('CALL Delete_From_Profile_Watch_List(?, ?, ?)', [$validatedData['profile_id'], $mediaId, $seriesId]);
+
+            if($result[0] == 'Row deleted from Profile_Watch_List successfully.') {
+                return response()->json([
+                    'message' => 'Media removed from watchlist.'
+                ]);
+            }
+            else
+            {
+                return response()->json(['message' => 'Something went wrong.'], 500);
+            }
+        }
+    }
+
 }
