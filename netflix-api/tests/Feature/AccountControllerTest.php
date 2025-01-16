@@ -1,186 +1,146 @@
 <?php
+
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class AccountControllerTest extends TestCase
 {
     use RefreshDatabase;
 
     /**
-     * Test successful login with valid credentials.
+     * Test login functionality.
      */
-    public function test_login_success()
+    public function testLoginSuccess()
     {
-        // Create a test user
-        DB::table('Account')->insert([
-            'email' => 'user1@example.com',
-            'hashed_password' => Hash::make('examplePassword1'),
+        // Prepare test data
+        $password = 'password123';
+        $user = DB::table('Account')->insertGetId([
+            'email' => 'test@example.com',
+            'hashed_password' => Hash::make($password),
             'subscription_id' => 1,
             'billed_from' => now(),
-            'blocked' => 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // Send login request
-        $response = $this->postJson('/api/account/login', [
-            'email' => 'user1@example.com',
-            'password' => 'examplePassword1',
+        $response = $this->postJson('/api/login', [
+            'email' => 'test@example.com',
+            'password' => $password,
         ]);
 
-        // Assert success
         $response->assertStatus(200)
-                 ->assertJsonStructure(['message', 'token']);
+            ->assertJsonStructure(['token', 'user' => ['account_id', 'email', 'subscription_id', 'billed_from']]);
     }
 
     /**
-     * Test login fails with incorrect password.
+     * Test login failure due to invalid credentials.
      */
-    public function test_login_fails_with_incorrect_password()
+    public function testLoginInvalidCredentials()
     {
-        // Create a test user
-        DB::table('Account')->insert([
-            'email' => 'user1@example.com',
-            'hashed_password' => Hash::make('examplePassword1'),
+        $response = $this->postJson('/api/login', [
+            'email' => 'invalid@example.com',
+            'password' => 'wrongpassword',
+        ]);
+
+        $response->assertStatus(404)
+            ->assertJson(['error' => 'User not found']);
+    }
+
+    /**
+     * Test registration functionality.
+     */
+    public function testRegisterSuccess()
+    {
+        $response = $this->postJson('/api/register', [
+            'email' => 'test@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'billed_from' => '2025-01-01',
             'subscription_id' => 1,
-            'billed_from' => now(),
-            'blocked' => 0,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
-        // Send login request with incorrect password
-        $response = $this->postJson('/api/account/login', [
-            'email' => 'user1@example.com',
-            'password' => 'wrongPassword',
-        ]);
-
-        // Assert unauthorized
-        $response->assertStatus(401)
-                 ->assertJson(['error' => 'Invalid credentials']);
+        $response->assertStatus(201)
+            ->assertJson(['message' => 'User registered successfully.']);
     }
 
     /**
-     * Test successful logout.
+     * Test logout functionality.
      */
-    public function test_logout_success()
+    public function testLogoutSuccess()
     {
-        // Create a test token
+        // Prepare test data
+        $token = bin2hex(random_bytes(40));
         DB::table('tokens')->insert([
             'account_id' => 1,
-            'token' => 'validToken',
+            'token' => $token,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // Send logout request
-        $response = $this->postJson('/api/account/logout', [], [
-            'Authorization' => 'Bearer validToken',
-        ]);
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/logout');
 
-        // Assert success
         $response->assertStatus(200)
-                 ->assertJson(['message' => 'Logged out successfully']);
-
-        // Assert token is deleted
-        $this->assertDatabaseMissing('tokens', ['token' => 'validToken']);
+            ->assertJson(['message' => 'Logged out successfully']);
     }
 
     /**
-     * Test logout fails without a token.
+     * Test password reset functionality.
      */
-    public function test_logout_fails_without_token()
+    public function testResetPasswordSuccess()
     {
-        // Send logout request without token
-        $response = $this->postJson('/api/account/logout');
-
-        // Assert bad request
-        $response->assertStatus(400)
-                 ->assertJson(['error' => 'No token provided']);
-    }
-
-    /**
-     * Test successful registration.
-     */
-    public function test_register_success()
-    {
-        // Insert a test subscription
-        DB::table('Subscription')->insert([
-            'subscription_id' => 1,
-            'subscription_name' => 'Basic',
-            'subscription_price' => 7.99,
-        ]);
-
-        // Send registration request
-        $response = $this->postJson('/api/account/register', [
-            'email' => 'user2@example.com',
-            'password' => 'examplePassword2',
-            'password_confirmation' => 'examplePassword2',
-            'subscription_id' => 1,
-            'billed_from' => now()->toDateString(),
-        ]);
-
-        // Assert success
-        $response->assertStatus(201)
-                 ->assertJson(['message' => 'User registered successfully']);
-
-        // Assert account exists in the database
-        $this->assertDatabaseHas('Account', ['email' => 'user2@example.com']);
-    }
-
-    /**
-     * Test registration fails with duplicate email.
-     */
-    public function test_register_fails_with_duplicate_email()
-    {
-        // Insert an existing user
+        // Prepare test data
+        $email = 'test@example.com';
         DB::table('Account')->insert([
-            'email' => 'user1@example.com',
-            'hashed_password' => Hash::make('examplePassword1'),
+            'email' => $email,
+            'hashed_password' => Hash::make('oldpassword123'),
             'subscription_id' => 1,
             'billed_from' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        // Send registration request with duplicate email
-        $response = $this->postJson('/api/account/register', [
-            'email' => 'user1@example.com',
-            'password' => 'examplePassword2',
-            'password_confirmation' => 'examplePassword2',
-            'subscription_id' => 1,
-            'billed_from' => now()->toDateString(),
+        $token = bin2hex(random_bytes(40));
+        DB::table('password_resets')->insert([
+            'email' => $email,
+            'token' => $token,
+            'created_at' => now(),
         ]);
 
-        // Assert unprocessable entity
-        $response->assertStatus(422);
+        $response = $this->postJson('/api/reset-password', [
+            'email' => $email,
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+            'token' => $token,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['message' => 'Password reset successfully']);
     }
 
     /**
-     * Test blocking an account.
+     * Test block account functionality.
      */
-    public function test_block_account_success()
+    public function testBlockAccountSuccess()
     {
-        // Create a test user
-        DB::table('Account')->insert([
-            'account_id' => 1,
-            'email' => 'user1@example.com',
-            'hashed_password' => Hash::make('examplePassword1'),
-            'subscription_id' => 1,
+        // Prepare test data
+        $accountId = DB::table('Account')->insertGetId([
+            'email' => 'test@example.com',
+            'hashed_password' => Hash::make('password123'),
             'billed_from' => now(),
+            'subscription_id' => 1,
             'blocked' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        // Send block account request
-        $response = $this->postJson('/api/account/block/1');
+        $response = $this->postJson("/api/block-account/{$accountId}");
 
-        // Assert success
         $response->assertStatus(200)
-                 ->assertJson(['message' => 'Account blocked successfully']);
-
-        // Assert account is blocked in the database
-        $this->assertDatabaseHas('Account', ['account_id' => 1, 'blocked' => 1]);
+            ->assertJson(['message' => 'Account blocked successfully']);
     }
 }

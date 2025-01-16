@@ -7,7 +7,8 @@ use App\Http\Controllers\{
     MediaController,
     ProfileController,
     SubscriptionController,
-    TokenController
+    TokenController,
+    ExternalApiController
 };
 
 // API Routes
@@ -48,4 +49,9 @@ Route::prefix('token')->group(function () {
     Route::put('/refresh', [TokenController::class, 'refreshToken']);
     Route::delete('/revoke', [TokenController::class, 'revokeToken']);
     Route::get('/validate', [TokenController::class, 'validateToken']);
+});
+
+// External API Routes
+Route::prefix('external')->group(function () {
+    Route::post('/generate-image', [ExternalApiController::class, 'generateImage']);
 });
