@@ -82,3 +82,146 @@ If a `docker-compose.yml` file is provided:
   ```bash
   docker rmi <image-name>
   ```
+
+
+
+# MariaDB Backup and Restore Guide
+
+## **Introduction**
+This part of the document provides instructions on how to install and use the MariaDB command-line tool for database backup and recovery.
+
+---
+
+## **Installation**
+### **Windows**
+#### **1. Install MariaDB**
+- Download the **MariaDB installer** from the official site:  
+  [➡ Download MariaDB](https://mariadb.org/download/)
+- Run the installer and select **"MariaDB Server"** (this includes all command-line tools).
+- Ensure MariaDB is added to the `PATH` environment variable during installation.
+
+#### **2. Verify The Installation**
+Open Command Prompt (`cmd`) and run:
+```sh
+mysql --version
+```
+
+#### **3. Default Command-Line Tools Location (Windows)**
+- `C:\Program Files\MariaDB 10.x\bin`
+- `C:\Program Files (x86)\MariaDB 10.x\bin`
+
+#### **4. Add to PATH (Optional)**
+To use the tools globally:
+- Open **System Properties** → **Environment Variables**.
+- Edit **Path** under "System Variables" and add:
+  ```
+  C:\Program Files\MariaDB 10.x\bin
+  ```
+- Restart the terminal.
+
+---
+
+### **Linux (Debian/Ubuntu)**
+#### **1. Install MariaDB**
+```sh
+sudo apt update
+sudo apt install mariadb-server mariadb-client
+```
+
+#### **2. Verify Installation**
+```sh
+mariadb --version
+```
+
+#### **3. Default Command-Line Tools Location (Linux)**
+- `/usr/bin/mariadb`
+- `/usr/bin/mysql`
+- `/usr/bin/mysqldump`
+- `/usr/bin/mariadb-dump`
+- `/usr/bin/mariadb-backup`
+
+#### **4. Start MariaDB**
+```sh
+sudo systemctl start mariadb
+```
+
+---
+
+### **macOS**
+#### **1. Install Using Homebrew**
+```sh
+brew install mariadb
+```
+
+#### **2. Verify Installation**
+```sh
+mariadb --version
+```
+
+#### **3. Start MariaDB Service**
+```sh
+brew services start mariadb
+```
+
+#### **4. Default Command-Line Tools Location (macOS)**
+- `/usr/local/bin/mariadb`
+- `/usr/local/bin/mysql`
+- `/usr/local/bin/mysqldump`
+- `/usr/local/bin/mariadb-dump`
+- `/usr/local/bin/mariadb-backup`
+
+---
+
+### **Docker (Cross-Platform Alternative)**
+#### **1. Install and Run MariaDB in Docker**
+```sh
+docker pull mariadb
+docker run --name mariadb-container -e MYSQL_ROOT_PASSWORD=1234 -d mariadb
+```
+
+#### **2. Connect to MariaDB in Docker**
+```sh
+docker exec -it mariadb-container mariadb -u root -p
+```
+
+---
+
+## **Backup and Restore Guide**
+### **Creating a Backup**
+To back up a database (e.g., `netflix_api`) and save it as a `.sql` file:
+```sh
+mysqldump -h localhost -P 3306 -u root -p --single-transaction --routines --events netflix_api > backups/2024-01-01.sql
+```
+
+#### **Backup Options Explained:**
+- `-h localhost` → Specifies the database host.
+- `-P 3306` → Specifies the port (default: 3306).
+- `-u root -p` → Logs in as root and prompts for a password.
+- `--single-transaction` → Ensures a consistent snapshot (for InnoDB).
+- `--routines` → Includes stored procedures and functions.
+- `--events` → Includes database events.
+- `> backups/2024-01-01.sql` → Saves the backup in the `backups` directory.
+
+---
+
+### **Restoring from Backup**
+#### **1. Drop and Recreate Database (Optional)**
+If restoring over an existing database, drop and recreate it first:
+```sh
+mysql -h localhost -P 3306 -u root -p -e "DROP DATABASE IF EXISTS netflix_api; CREATE DATABASE netflix_api;"
+```
+
+#### **2. Restore Backup**
+To restore the database from a `.sql` file:
+```sh
+mysql -h localhost -P 3306 -u root -p netflix_api < backups/2024-01-01.sql
+```
+
+---
+
+## **Backup Policy**
+The group recommends:
+- **Biweekle backups** to prevent data loss.
+- Keeping **two months** of historical backups.
+- Automating backups using a **cron job (Linux/macOS)** or **Task Scheduler (Windows)**.
+
