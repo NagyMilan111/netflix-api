@@ -1,49 +1,70 @@
-version: "3.9"
+version: '3.9'
 
 services:
+ # MariaDB Database
   mariadb:
-    image: mariadb:11
-    container_name: netflix-db
-    restart: no
+    image: mariadb:10.11
+    container_name: laravel_mariadb
     environment:
-      MYSQL_ROOT_PASSWORD: qwerty
-      MYSQL_DATABASE: netflix
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_SENIOR_USER}
+      - MYSQL_PASSWORD=${DB_SENIOR_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "3306:3306"
-    volumes:
-      - db-data:/var/lib/mysql
 
-  laravel:
+  # Laravel API
+  app:
     build:
-      context: .
-      dockerfile: ./netflix-api/Dockerfile
-    container_name: netflix-api
-    ports:
-      - "8000:8000"
+      context: ./laravel
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    working_dir: /var/www/html
     volumes:
-      - ./netflix-api:/var/www/html
+      - ./laravel:/var/www/html
+    environment:
+      - DB_HOST=mariadb
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_SENIOR_USER}
+      - DB_PASSWORD=${DB_SENIOR_PASSWORD}
+    ports:
+      - "${APP_PORT}:8000"
+    command: >
+      sh -c "/var/www/html/docker/wait-for-it.sh mariadb:3306 -- /var/www/html/docker/entrypoint.sh"
     depends_on:
       - mariadb
-    environment:
-      DB_HOST: mariadb
-      DB_DATABASE: netflix_api
-      DB_USERNAME: root
-      DB_PASSWORD: qwerty
-    command: >
-      sh -c "/var/www/html/docker/wait-for-it.sh mariadb:3306 -- /var/www/html/docker/entrypoint.sh"    
 
+  # PHPMyAdmin
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: netflix-phpmyadmin
-    restart: no
-    ports:
-      - "8080:80"
+    container_name: laravel_phpmyadmin
+    restart: unless-stopped
     environment:
-      PMA_HOST: mariadb
-      MYSQL_ROOT_PASSWORD: qwerty
+      - PMA_HOST=mariadb
+    ports:
+      - "8081:80"
     depends_on:
       - mariadb
 
+  # Vue.js Frontend
+  frontend:
+    build:
+      context: ./vue
+      dockerfile: Dockerfile
+    container_name: vue_frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./vue:/app
+    ports:
+      - "${VUE_PORT}:8080"
+    command: >
+      sh -c "/app/docker/entrypoint.sh"
+    depends_on:
+      - app
 
 volumes:
-  db-data:
+  dbdata:
