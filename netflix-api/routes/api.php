@@ -8,7 +8,8 @@ use App\Http\Controllers\{
     ProfileController,
     SubscriptionController,
     TokenController,
-    ExternalApiController
+    ExternalApiController,
+    EpisodeController
 };
 
 // API Routes
@@ -54,4 +55,13 @@ Route::prefix('token')->group(function () {
 // External API Routes
 Route::prefix('external')->group(function () {
     Route::post('/generate-image', [ExternalApiController::class, 'generateImage']);
+});
+
+// Episode Routes
+Route::prefix('episodes')->group(function () {
+    Route::get('/', [EpisodeController::class, 'index']); // List all episodes
+    Route::get('/{id}', [EpisodeController::class, 'show'])->whereNumber('id'); // Show a specific episode
+    Route::post('/', [EpisodeController::class, 'store']); // Create a new episode
+    Route::put('/{id}', [EpisodeController::class, 'update'])->whereNumber('id'); // Update an episode
+    Route::delete('/{id}', [EpisodeController::class, 'destroy'])->whereNumber('id'); // Delete an episode
 });
