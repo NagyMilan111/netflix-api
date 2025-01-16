@@ -188,9 +188,9 @@ docker exec -it mariadb-container mariadb -u root -p
 
 ## **Backup and Restore Guide**
 ### **Creating a Backup**
-To back up a database (e.g., `netflix_api`) and save it as a `.sql` file:
+To back up a database (e.g., `netflix`) and save it as a `.sql` file:
 ```sh
-mysqldump -h localhost -P 3306 -u root -p --single-transaction --routines --events netflix_api > backups/2024-01-01.sql
+mysqldump -h localhost -P 3306 -u root -p --single-transaction --routines --events netflix > backups/2024-01-01.sql
 ```
 
 #### **Backup Options Explained:**
@@ -208,20 +208,20 @@ mysqldump -h localhost -P 3306 -u root -p --single-transaction --routines --even
 #### **1. Drop and Recreate Database (Optional)**
 If restoring over an existing database, drop and recreate it first:
 ```sh
-mysql -h localhost -P 3306 -u root -p -e "DROP DATABASE IF EXISTS netflix_api; CREATE DATABASE netflix_api;"
+mysql -h localhost -P 3306 -u root -p -e "DROP DATABASE IF EXISTS netflix; CREATE DATABASE netflix;"
 ```
 
 #### **2. Restore Backup**
 To restore the database from a `.sql` file:
 ```sh
-mysql -h localhost -P 3306 -u root -p netflix_api < backups/2024-01-01.sql
+mysql -h localhost -P 3306 -u root -p netflix < backups/2024-01-01.sql
 ```
 
 ---
 
 ## **Backup Policy**
 The group recommends:
-- **Biweekle backups** to prevent data loss.
+- **Biweekly backups** to prevent data loss.
 - Keeping **two months** of historical backups.
 - Automating backups using a **cron job (Linux/macOS)** or **Task Scheduler (Windows)**.
 
