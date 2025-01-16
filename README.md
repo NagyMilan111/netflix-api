@@ -188,9 +188,9 @@ docker exec -it mariadb-container mariadb -u root -p
 
 ## **Backup and Restore Guide**
 ### **Creating a Backup**
-To back up a database (e.g., `netflix`) and save it as a `.sql` file:
+To back up a database (e.g., `Netflix`) and save it as a `.sql` file:
 ```sh
-mysqldump -h localhost -P 3306 -u root -p --single-transaction --routines --events netflix > backups/2024-01-01.sql
+mysqldump -h localhost -P 3306 -u root -p --single-transaction --routines --events Netflix > backups/2024-01-01.sql
 ```
 
 #### **Backup Options Explained:**
@@ -208,13 +208,13 @@ mysqldump -h localhost -P 3306 -u root -p --single-transaction --routines --even
 #### **1. Drop and Recreate Database (Optional)**
 If restoring over an existing database, drop and recreate it first:
 ```sh
-mysql -h localhost -P 3306 -u root -p -e "DROP DATABASE IF EXISTS netflix; CREATE DATABASE netflix;"
+mysql -h localhost -P 3306 -u root -p -e "DROP DATABASE IF EXISTS Netflix; CREATE DATABASE Netflix;"
 ```
 
 #### **2. Restore Backup**
 To restore the database from a `.sql` file:
 ```sh
-mysql -h localhost -P 3306 -u root -p netflix < backups/2024-01-01.sql
+mysql -h localhost -P 3306 -u root -p Netflix < backups/2024-01-01.sql
 ```
 
 ---
