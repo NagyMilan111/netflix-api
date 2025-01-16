@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Token;
+use App\Models\Account;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class TokenController extends Controller
 {
@@ -13,7 +16,7 @@ class TokenController extends Controller
     public function generateToken($userId)
     {
         // Check if the user exists
-        $user = DB::table('Account')->where('account_id', $userId)->first();
+        $user = Account::find($userId);
 
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
@@ -23,11 +26,9 @@ class TokenController extends Controller
         $token = bin2hex(random_bytes(40));
 
         // Insert the token into the database
-        DB::table('tokens')->insert([
+        Token::create([
             'account_id' => $userId,
             'token' => $token,
-            'created_at' => now(),
-            'updated_at' => now(),
         ]);
 
         return response()->json(['token' => $token], 200);
@@ -45,7 +46,7 @@ class TokenController extends Controller
         }
 
         // Fetch the current token from the database
-        $tokenRecord = DB::table('tokens')->where('token', $currentToken)->first();
+        $tokenRecord = Token::where('token', $currentToken)->first();
 
         if (!$tokenRecord) {
             return response()->json(['error' => 'Invalid token'], 401);
@@ -55,9 +56,8 @@ class TokenController extends Controller
         $newToken = bin2hex(random_bytes(40));
 
         // Update the token in the database
-        DB::table('tokens')->where('token', $currentToken)->update([
+        $tokenRecord->update([
             'token' => $newToken,
-            'updated_at' => now(),
         ]);
 
         return response()->json(['token' => $newToken], 200);
@@ -75,7 +75,7 @@ class TokenController extends Controller
         }
 
         // Delete the token from the database
-        $deleted = DB::table('tokens')->where('token', $currentToken)->delete();
+        $deleted = Token::where('token', $currentToken)->delete();
 
         if (!$deleted) {
             return response()->json(['error' => 'Token not found'], 404);
@@ -96,7 +96,7 @@ class TokenController extends Controller
         }
 
         // Check if the token exists in the database
-        $isValid = DB::table('tokens')->where('token', $currentToken)->exists();
+        $isValid = Token::where('token', $currentToken)->exists();
 
         return response()->json(['valid' => $isValid], 200);
     }
