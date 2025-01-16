@@ -146,3 +146,14 @@ CREATE TABLE IF NOT EXISTS `Discounted_Users` (
     FOREIGN KEY (invited_account_id) REFERENCES `Account` (account_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- 16. Create Logs
+CREATE TABLE IF NOT EXISTS `Logs` (
+    message varchar(255) NOT NULL,
+    time datetime NOT NULL,
+) ENGINE=InnoDB;
+
+-- 15. Create Discounted_Users table (depends on Account)
+CREATE TABLE IF NOT EXISTS `Tokens` (
+    account_id INT(11) NOT NULL,
+    token INT(11) NOT NULL,
+) ENGINE=InnoDB;
