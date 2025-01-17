@@ -1,27 +1,62 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_apply_discount_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateApplyDiscountProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('apply_discount_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE apply_discount (
+                IN inviter_account_id INT,
+                IN invitee_account_id INT,
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE inviter_exists INT;
+                DECLARE invitee_exists INT;
+                DECLARE invitee_already_invited INT;
+
+                SELECT COUNT(*) INTO inviter_exists
+                FROM Account
+                WHERE account_id = inviter_account_id;
+
+                SELECT COUNT(*) INTO invitee_exists
+                FROM Account
+                WHERE account_id = invitee_account_id;
+
+                SELECT COUNT(*) INTO invitee_already_invited
+                FROM Discounted_Users
+                WHERE invited_account_id = invitee_account_id;
+
+                IF inviter_exists = 0 THEN
+                    SET result_message = "Inviter does not exist.";
+                ELSEIF invitee_exists = 0 THEN
+                    SET result_message = "Invitee does not exist.";
+                ELSEIF invitee_already_invited > 0 THEN
+                    SET result_message = "Invitee has already been invited.";
+                ELSE
+                    INSERT INTO Discounted_Users (account_id, invited_account_id)
+                    VALUES (inviter_account_id, invitee_account_id);
+
+                    UPDATE Account
+                    SET discount_active = 1
+                    WHERE account_id = inviter_account_id;
+
+                    UPDATE Account
+                    SET discount_active = 1
+                    WHERE account_id = invitee_account_id;
+
+                    SET result_message = "Discount applied successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('apply_discount_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS apply_discount');
     }
-};
+}

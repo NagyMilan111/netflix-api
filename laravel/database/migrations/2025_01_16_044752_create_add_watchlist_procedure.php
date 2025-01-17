@@ -1,27 +1,40 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_add_watchlist_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateAddWatchlistProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('add_watchlist_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE add_watchlist (
+                IN profile_id INT,
+                IN media_id INT,
+                IN series_id INT,
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE watchlist_exists INT;
+
+                SELECT COUNT(*) INTO watchlist_exists
+                FROM Watchlist
+                WHERE profile_id = profile_id;
+
+                IF watchlist_exists > 0 THEN
+                    SET result_message = "Watchlist already exists for this profile.";
+                ELSE
+                    INSERT INTO Watchlist (profile_id, media_id, series_id)
+                    VALUES (profile_id, media_id, series_id);
+                    SET result_message = "Watchlist added successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('add_watchlist_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS add_watchlist');
     }
-};
+}

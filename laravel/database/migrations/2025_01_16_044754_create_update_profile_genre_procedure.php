@@ -1,27 +1,48 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_update_profile_genre_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateUpdateProfileGenreProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('update_profile_genre_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE update_profile_genre (
+                IN p_profile_id INT,
+                IN p_genre_id INT,
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE profile_exists INT;
+                DECLARE genre_exists INT;
+
+                SELECT COUNT(*) INTO profile_exists
+                FROM Profile
+                WHERE profile_id = p_profile_id;
+
+                SELECT COUNT(*) INTO genre_exists
+                FROM Genre
+                WHERE genre_id = p_genre_id;
+
+                IF profile_exists = 0 THEN
+                    SET result_message = "Profile does not exist.";
+                ELSEIF genre_exists = 0 THEN
+                    SET result_message = "Genre does not exist.";
+                ELSE
+                    INSERT INTO Profile_Genre (profile_id, genre_id)
+                    VALUES (p_profile_id, p_genre_id)
+                    ON DUPLICATE KEY UPDATE genre_id = p_genre_id;
+
+                    SET result_message = "Profile genre updated successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('update_profile_genre_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS update_profile_genre');
     }
-};
+}

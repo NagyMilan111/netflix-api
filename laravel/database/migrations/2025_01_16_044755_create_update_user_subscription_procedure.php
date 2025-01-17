@@ -1,27 +1,40 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_update_user_subscription_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateUpdateUserSubscriptionProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('update_user_subscription_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE update_user_subscription (
+                IN user_email VARCHAR(255),
+                IN new_subscription_id INT,
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE user_exists INT;
+
+                SELECT COUNT(*) INTO user_exists
+                FROM Account
+                WHERE email = user_email;
+
+                IF user_exists = 0 THEN
+                    SET result_message = "User not found.";
+                ELSE
+                    UPDATE Account
+                    SET subscription_id = new_subscription_id
+                    WHERE email = user_email;
+                    SET result_message = "Subscription updated successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('update_user_subscription_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS update_user_subscription');
     }
-};
+}

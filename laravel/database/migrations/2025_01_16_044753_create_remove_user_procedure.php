@@ -1,27 +1,45 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_remove_user_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateRemoveUserProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('remove_user_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE remove_user (
+                IN user_account_id INT,
+                OUT result_message VARCHAR(255) 
+            )
+            BEGIN
+                DECLARE account_exists INT; 
+
+                SELECT COUNT(*) INTO account_exists
+                FROM Account
+                WHERE account_id = user_account_id;
+
+                IF account_exists = 0 THEN
+                    SET result_message = "Account not found."; 
+                ELSE
+                    DELETE FROM Discounted_Users
+                    WHERE account_id = user_account_id;
+
+                    DELETE FROM Discounted_Users
+                    WHERE invited_account_id = user_account_id;
+
+                    DELETE FROM Account
+                    WHERE account_id = user_account_id;
+
+                    SET result_message = "Account removed successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('remove_user_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS remove_user');
     }
-};
+}

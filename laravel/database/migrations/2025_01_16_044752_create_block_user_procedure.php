@@ -1,27 +1,39 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_block_user_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateBlockUserProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('block_user_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE block_user (
+                IN user_email VARCHAR(255),
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE user_exists INT;
+
+                SELECT COUNT(*) INTO user_exists
+                FROM Account
+                WHERE email = user_email;
+
+                IF user_exists = 0 THEN
+                    SET result_message = "User not found.";
+                ELSE
+                    UPDATE Account
+                    SET blocked = 1
+                    WHERE email = user_email;
+                    SET result_message = "User successfully blocked.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('block_user_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS block_user');
     }
-};
+}

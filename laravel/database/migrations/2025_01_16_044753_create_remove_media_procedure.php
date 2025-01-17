@@ -1,27 +1,39 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_remove_media_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateRemoveMediaProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('remove_media_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE remove_media (
+                IN p_media_id INT,
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE media_exists INT;
+                
+                SELECT COUNT(*) INTO media_exists
+                FROM Media
+                WHERE media_id = p_media_id;
+
+                IF media_exists = 0 THEN
+                    SET result_message = "Media not found.";
+                ELSE
+                    DELETE FROM Media
+                    WHERE media_id = p_media_id;
+
+                    SET result_message = "Media removed successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('remove_media_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS remove_media');
     }
-};
+}

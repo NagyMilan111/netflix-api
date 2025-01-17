@@ -1,27 +1,38 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_remove_watchlist_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateRemoveWatchlistProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('remove_watchlist_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE remove_watchlist (
+                IN profile_id INT,
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE watchlist_exists INT;
+
+                SELECT COUNT(*) INTO watchlist_exists
+                FROM Watchlist
+                WHERE profile_id = profile_id;
+
+                IF watchlist_exists = 0 THEN
+                    SET result_message = "No watchlist exists for this profile.";
+                ELSE
+                    DELETE FROM Watchlist
+                    WHERE profile_id = profile_id;
+                    SET result_message = "Watchlist removed successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('remove_watchlist_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS remove_watchlist');
     }
-};
+}

@@ -1,27 +1,38 @@
 <?php
 
+// database/migrations/xxxx_xx_xx_create_remove_profile_procedure.php
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class CreateRemoveProfileProcedure extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('remove_profile_procedure', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        DB::unprepared('
+            CREATE PROCEDURE remove_profile (
+                IN profile_id INT,
+                OUT result_message VARCHAR(255)
+            )
+            BEGIN
+                DECLARE profile_exists INT;
+
+                SELECT COUNT(*) INTO profile_exists
+                FROM Profile
+                WHERE profile_id = profile_id;
+
+                IF profile_exists = 0 THEN
+                    SET result_message = "Profile not found.";
+                ELSE
+                    DELETE FROM Profile
+                    WHERE profile_id = profile_id;
+                    SET result_message = "Profile removed successfully.";
+                END IF;
+            END
+        ');
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('remove_profile_procedure');
+        DB::unprepared('DROP PROCEDURE IF EXISTS remove_profile');
     }
-};
+}
