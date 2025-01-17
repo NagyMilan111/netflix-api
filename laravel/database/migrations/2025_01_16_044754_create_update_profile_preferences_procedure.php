@@ -1,6 +1,6 @@
 <?php
 
-// database/migrations/xxxx_xx_xx_create_update_profile_preferences_procedure.php
+// database/migrations/xxxx_xx_00_create_update_profile_preferences_procedure.php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
