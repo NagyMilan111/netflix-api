@@ -375,7 +375,7 @@ BEGIN
     DECLARE user_blocked INT;
     DECLARE temp_account_id INT;
 
-    SELECT COUNT(*), id, hashed_password, blocked
+    SELECT COUNT(*), account_id, hashed_password, blocked
     INTO user_exists, temp_account_id, hashed_password, user_blocked
     FROM Account
     WHERE email = user_email;

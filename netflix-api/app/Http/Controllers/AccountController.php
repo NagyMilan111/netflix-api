@@ -31,42 +31,52 @@ class AccountController extends Controller
             $password = $request->input('password');
             $password = Crypt::encrypt($password);
 
-            // Fetch user from the database
-            $result = DB::select('CALL User_Login(?, ?)', [$email, $password]);
-            if ($result[0] == 'User Login Successful') {
-                return response()->json(['success' => $request[0]], 200);
+            // Call the stored procedure
+            DB::select('CALL User_Login(?, ?, @message, @account_id)', [$email, $password]);
+
+            // Retrieve both OUT parameters in a single query
+            $outParams = DB::select('SELECT @message AS message, @account_id AS account_id')[0];
+
+            // Access the OUT parameters
+            $message = $outParams->message;
+            $account_id = $outParams->account_id;
+
+
+            // Use $userId as needed
+            if ($message == 'User login successful.') {
+                return response()->json(['success' => $message, 'account_id' => $account_id], 200);
             }
-            if ($result[0] == 'User not found.') {
-                return response()->json(['error' => $request[0]], 404);
+            if ($message == 'User not found.') {
+                return response()->json(['error' => $message], 404);
             }
 
             // Verify the password
-            if ($result[0] == 'Incorrect password.') {
-                return response()->json(['error' => $request[0]], 401);
+            if ($message == 'Incorrect password.') {
+                return response()->json(['error' => $message], 401);
             }
 
-            if ($result[0] == 'User is blocked.') {
-                return response()->json(['error' => $request[0]], 401);
+            if ($message == 'User is blocked.') {
+                return response()->json(['error' => $message], 401);
             }
             // Generate a token
             $token = bin2hex(random_bytes(40));
-
-            // Store the token in the database
-            $insertTokenResult = DB::select('CALL Insert_Token(?, ?)', [$result[1], $token]);
-            if($insertTokenResult[0] == 'Token inserted successfully.') {
-                return response()->json([
-                    'token' => $token,
-                    'user' => [
-                        'account_id' => $result[1],
-                        'email' => $email
-                    ],
-                    'message' => 'Login successful.',
-                ], 200);
-            }
-            else {
-                return response()->json(['error' => 'Failed to add token.'], 500);
-            }
-
+            /*
+                        // Store the token in the database
+                        $insertTokenResult = DB::select('CALL Insert_Token(?, ?, @message)', [$result[1], $token]);
+                        if($insertTokenResult[0] == 'Token inserted successfully.') {
+                            return response()->json([
+                                'token' => $token,
+                                'user' => [
+                                    'account_id' => $result[1],
+                                    'email' => $email
+                                ],
+                                'message' => 'Login successful.',
+                            ], 200);
+                        }
+                        else {
+                            return response()->json(['error' => 'Failed to add token.'], 500);
+                        }
+            */
         } catch (\Exception $e) {
             \Log::error('Login Error: ' . $e->getMessage());
             return response()->json(['error' => 'Internal Server Error.'], 500);
@@ -81,7 +91,7 @@ class AccountController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|string|email|max:255|unique:Account,email',
-                'password' => 'required|string|min:8|confirmed',
+                'password' => 'required|string|min:8',
                 'subscription_id' => 'required|integer|exists:Subscription,subscription_id',
             ]);
 
@@ -94,12 +104,12 @@ class AccountController extends Controller
             $subscriptionId = $request->input('subscription_id');
             $email = $request->input('email');
 
-            $result = DB::select('CALL Register_User(?, ?, ?)', [$email, $hashedPassword, $subscriptionId]);
-            if ($result[3] == 'User registered successfully.') {
+            $result = DB::select('CALL Register_User(?, ?, ?, @a)', [$email, $hashedPassword, $subscriptionId]);
+            if ($result[0] == 'User registered successfully.') {
                 return response()->json([
                     'message' => 'User registered successfully.',
                 ], 201);
-            } elseif ($result == 'Email already exists.') {
+            } elseif ($result[0] == 'Email already exists.') {
                 return response()->json([
                     'message' => 'Email already exists.',
                 ], 401);
@@ -169,8 +179,7 @@ class AccountController extends Controller
             $result = DB::select('CALL Update_Password(?, ?)', $email, $password);
             if ($result[0] == 'Password updated successfully.') {
                 return response()->json(['message' => $result[0]], 200);
-            }
-            else {
+            } else {
                 return response()->json(['error' => $result[0]], 404);
             }
 
@@ -209,10 +218,9 @@ class AccountController extends Controller
 
         $result = DB::select('CALL Remove_Profile(?)', [$profile_id]);
 
-        if($result[0] == 'Profile removed successfully.') {
+        if ($result[0] == 'Profile removed successfully.') {
             return response()->json(['message' => $result[0]], 200);
-        }
-        else {
+        } else {
             return response()->json(['message' => $result[0]], 404);
         }
     }
