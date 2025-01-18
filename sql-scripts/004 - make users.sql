@@ -154,4 +154,9 @@ GRANT EXECUTE ON PROCEDURE Netflix.Register_User TO 'api'@'%';
 GRANT EXECUTE ON PROCEDURE Netflix.Update_Password TO 'api'@'%';
 FLUSH PRIVILEGES;
 
+-- Drop root users (if they exist)
+DROP USER IF EXISTS 'root'@'localhost';
+DROP USER IF EXISTS 'root'@'%';
 
+-- Flush privileges to apply changes
+FLUSH PRIVILEGES;

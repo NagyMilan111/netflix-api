@@ -12,7 +12,7 @@ composer install --no-interaction --prefer-dist
 
 # Run migrations and seed the database
 php artisan migrate --force
-php artisan db:seed --force
+
 
 # Generate the application key and clear caches
 php artisan key:generate

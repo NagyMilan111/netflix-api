@@ -37,12 +37,29 @@ services:
     container_name: netflix-phpmyadmin
     restart: no
     ports:
-      - "8080:80"
+      - "8081:80"
     environment:
       PMA_HOST: mariadb
       MYSQL_ROOT_PASSWORD: qwerty
     depends_on:
       - mariadb
+
+# Vue.js Frontend
+  frontend:
+    build:
+      context: ./vue
+      dockerfile: Dockerfile
+    container_name: vue_frontend
+    restart: unless-stopped
+    working_dir: /laravel
+    volumes:
+      - ./vue:/laravel
+    ports:
+      - "8082:8000"
+    command: >
+      sh -c "/app/docker/entrypoint.sh"
+    depends_on:
+      - laravel
 
 
 volumes:
