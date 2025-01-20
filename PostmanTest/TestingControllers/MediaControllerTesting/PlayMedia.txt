@@ -1,0 +1,32 @@
+1. Play Media
+Request Details:
+URL: http://127.0.0.1:8000/api/media/{id}/play
+Replace {id} with a valid media_id (e.g., 1).
+Method: GET
+Headers:
+json
+Copy code
+{
+    "Authorization": "Bearer <your_token>",
+    "Content-Type": "application/json"
+}
+Body (optional):
+json
+Copy code
+{
+    "profile_id": 1
+}
+Expected Responses:
+200 (Success):
+json
+Copy code
+{
+    "message": "Media is playing",
+    "media_id": 1
+}
+404 (Media Not Found):
+json
+Copy code
+{
+    "error": "Media not found"
+}

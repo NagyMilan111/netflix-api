@@ -1,0 +1,186 @@
+Note!
+go to 
+php artisan tinker
+echo Hash::make('examplePassword1');
+
+copy the hashcode
+
+update the SQL
+
+UPDATE accounts 
+SET hashed_password = '"$2y$12$63dUZW3LT3mf/DLsZ.sWY.mdEeFvjtmFqqPct7HBOJl5WYqpO1UrK"'
+WHERE email = 'admin@example.com';
+
+then try to login.
+
+Note: Login and Logout is connected! so if you log in you need to logout!
+
+1. Missing Email and Password
+Test: No email or password provided.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{}
+Expected Response: 422 Unprocessable Entity
+json
+Copy code
+{
+  "errors": {
+    "email": ["The email field is required."],
+    "password": ["The password field is required."]
+  }
+}
+2. Missing Password
+Test: Email provided but password is missing.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{
+  "email": "user1@example.com"
+}
+Expected Response: 422 Unprocessable Entity
+json
+Copy code
+{
+  "errors": {
+    "password": ["The password field is required."]
+  }
+}
+3. Missing Email
+Test: Password provided but email is missing.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{
+  "password": "examplePassword1"
+}
+Expected Response: 422 Unprocessable Entity
+json
+Copy code
+{
+  "errors": {
+    "email": ["The email field is required."]
+  }
+}
+4. Invalid Email Format
+Test: Email provided is not in a valid email format.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{
+  "email": "invalidEmail",
+  "password": "examplePassword1"
+}
+Expected Response: 422 Unprocessable Entity
+json
+Copy code
+{
+  "errors": {
+    "email": ["The email must be a valid email address."]
+  }
+}
+5. Non-Existent Email
+Test: Email is valid but doesn't exist in the database.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{
+  "email": "nonexistent@example.com",
+  "password": "examplePassword1"
+}
+Expected Response: 404 Not Found
+json
+Copy code
+{
+  "error": "User not found"
+}
+6. Incorrect Password
+Test: Email exists but the password is incorrect.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{
+  "email": "user1@example.com",
+  "password": "wrongPassword"
+}
+Expected Response: 401 Unauthorized
+json
+Copy code
+{
+  "error": "Invalid password"
+}
+7. Short Password
+Test: Password is shorter than the required 8 characters.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{
+  "email": "user1@example.com",
+  "password": "short"
+}
+Expected Response: 422 Unprocessable Entity
+json
+Copy code
+{
+  "errors": {
+    "password": ["The password must be at least 8 characters."]
+  }
+}
+8. Empty JSON Body
+Test: No data is sent in the request body.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{}
+Expected Response: 422 Unprocessable Entity
+json
+Copy code
+{
+  "errors": {
+    "email": ["The email field is required."],
+    "password": ["The password field is required."]
+  }
+}
+9. Invalid JSON Format
+Test: The request body is invalid JSON.
+Method: POST
+URL: http://127.0.0.1:8000/api/account/login
+Body:
+json
+Copy code
+{
+  "email": "user1@example.com",
+  "password":
+}
+Expected Response: 400 Bad Request
+json
+Copy code
+{
+  "message": "Malformed JSON request"
+}
+10. Unsupported HTTP Method
+Test: Using an unsupported HTTP method, such as GET.
+Method: GET
+URL: http://127.0.0.1:8000/api/account/login
+Expected Response: 405 Method Not Allowed
+json
+Copy code
+{
+  "message": "The GET method is not supported for this route. Supported methods: POST."
+}
