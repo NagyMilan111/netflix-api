@@ -44,11 +44,11 @@ DELIMITER //
 
 CREATE PROCEDURE Add_Profile (
     IN p_account_id INT,
-    IN profile_name VARCHAR(255),
-    IN profile_image VARCHAR(255),
-    IN profile_age INT,
-    IN profile_lang INT,
-    IN profile_movies_preferred TINYINT(1),
+    IN p_profile_name VARCHAR(255),
+    IN p_profile_image VARCHAR(255),
+    IN p_profile_age INT,
+    IN p_profile_lang INT,
+    IN p_profile_movies_preferred TINYINT(1),
     OUT result_message VARCHAR(255)
 )
 BEGIN
@@ -72,11 +72,11 @@ BEGIN
         )
         VALUES (
             p_account_id,
-            profile_name,
-            profile_image,
-            profile_age,
-            profile_lang,
-            profile_movies_preferred
+            p_profile_name,
+            p_profile_image,
+            p_profile_age,
+            p_profile_lang,
+            p_profile_movies_preferred
         );
 
         SET result_message = 'Profile added successfully.';
@@ -476,7 +476,7 @@ DELIMITER //
 CREATE PROCEDURE Register_User (
     IN user_email VARCHAR(255),
     IN user_password VARCHAR(255),
-    IN subscription_id INT,
+    IN p_subscription_id INT,
     OUT result_message VARCHAR(255)
 )
 BEGIN
@@ -500,7 +500,7 @@ BEGIN
         VALUES (
             user_email,
             user_password,
-            subscription_id,
+            p_subscription_id,
             0,
             0,
             DATE_ADD(CURDATE(), INTERVAL 7 DAY)

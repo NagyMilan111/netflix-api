@@ -28,25 +28,23 @@ class SubscriptionController extends Controller
      */
     public function updateSubscription(Request $request)
     {
-        // Validate input
-        $validatedData = $request->validate([
-            'user_id' => 'required|integer|exists:Account,account_id',
-            'subscription_id' => 'required|integer|exists:Subscription,subscription_id',
-        ]);
 
 
-        $userId = $validatedData['user_id'];
-        $subscriptionId = $validatedData['subscription_id'];
-        $result = DB::select('CALL Update_User_Subscription(?, ?)', [$userId, $subscriptionId]);
+        $user_id = $request->input('user_id');
+        $subscription_id = $request->input('subscription_id');
+        DB::select('CALL Update_User_Subscription(?, ?)', [$user_id, $subscription_id]);
 
-        if ($result[0] == 'Subscription updated successfully.') {
+        $result = DB::select('SELECT @message as message')[0];
+        $message = $result->message;
+
+        if ($message == 'Subscription updated successfully.') {
             return response()->json(['message' => 'Subscription updated successfully.'], 200);
         }
         elseif ($result[0] = 'Failed to update subscription.'){
-            return response()->json(['error' => $result[0]], 400);
+            return response()->json(['error' => $message], 400);
         }
         else {
-            return response()->json(['error' => $result[0]], 404);
+            return response()->json(['error' => $message], 404);
         }
     }
 }

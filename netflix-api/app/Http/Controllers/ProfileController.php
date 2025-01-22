@@ -13,22 +13,19 @@ class ProfileController extends Controller
      */
     public function updatePreferences(Request $request)
     {
-        // Validate the request
-        $validatedData = $request->validate([
-            'profile_id' => 'required|integer|exists:Profile,profile_id',
-            'profile_movies_preferred' => 'nullable|boolean',
-        ]);
 
-        $result = DB::select('CALL Update_Profile_Preferences(?)', [$request->input('profile_id')]);
+        DB::select('CALL Update_Profile_Preferences(?)', [$request->input('profile_id')]);
+        $result = DB::select('SELECT @message as message')[0];
+        $message = $result->message;
 
-        if ($result[0] == 'Preferences updated successfully.') {
+        if ($message == 'Preferences updated successfully.') {
             return response()->json(['message' => 'Preferences updated successfully.'], 200);
 
-        } else if ($result[0] == 'Failed to update preferences.') {
+        } else if ($message == 'Failed to update preferences.') {
             return response()->json(['error' => 'Failed to update preferences.'], 500);
         }
         else {
-            return response()->json(['message' => $result[0]], 404);
+            return response()->json(['message' => $message], 404);
         }
     }
 
@@ -40,9 +37,13 @@ class ProfileController extends Controller
 
         $profile_id = $request->input('profile_id');
         // Fetch watchlist for the given account
-        $toWatch = DB::select('CALL Get_Watch_List(?)', [$profile_id]);
-        if($toWatch != null) {
-            return response()->json(['watchHistory' => $toWatch], 200);
+        DB::select('CALL Get_Watch_List(?)', [$profile_id]);
+
+        $result = DB::select('SELECT @result_message as message')[0];
+        $message = $result->message;
+
+        if($message != null) {
+            return response()->json(['watchHistory' => $message], 200);
         }
         else {
             return response()->json(['error' => 'Watch List not found.'], 404);
@@ -53,29 +54,38 @@ class ProfileController extends Controller
     /**
      * Manage a user's watchlist (add or remove media).
      */
-    public function manageWatchList($mediaId, $seriesId, Request $request)
+    public function manageWatchList(Request $request)
     {
         // Validate input
         $validatedData = $request->validate([
-            'profile_id' => 'required|integer|exists:Profile,profile_id',
             'action' => 'required|in:add,remove',
         ]);
 
+        $media_id = $request->input('media_id');
+        $series_id = $request->input('series_id');
+        $profile_id = $request->input('profile_id');
+
         if ($validatedData['action'] === 'add') {
             // Add media to the watchlist
-            $result = DB::select('CALL Insert_Into_Watch_List(?, ?, ?)', [$validatedData['profile_id'], $mediaId, $seriesId]);
-            if($result[0] == 'Row inserted into Profile_Watch_List successfully.') {
+            DB::select('CALL Insert_Into_Profile_Watch_List(?, ?, ?)', [$profile_id, $media_id, $series_id]);
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if($message == 'Row inserted into Profile_Watch_List successfully.') {
                 return response()->json(['message' => 'Media added to watchlist.']);
             }
             else
             {
-                return response()->json(['message' => 'Something went wrong'], 500);
+                return response()->json(['message' => 'Something went wrong.'], 500);
             }
         } else {
             // Remove media from the watchlist
-            $result = DB::select('CALL Delete_From_Profile_Watch_List(?, ?, ?)', [$validatedData['profile_id'], $mediaId, $seriesId]);
+            DB::select('CALL Delete_From_Profile_Watch_List(?, ?, ?)', [$profile_id, $media_id, $series_id]);
 
-            if($result[0] == 'Row deleted from Profile_Watch_List successfully.') {
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if($message == 'Row deleted from Profile_Watch_List successfully.') {
                 return response()->json([
                     'message' => 'Media removed from watchlist.'
                 ]);

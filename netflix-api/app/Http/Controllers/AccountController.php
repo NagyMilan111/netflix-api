@@ -42,6 +42,8 @@ class AccountController extends Controller
             $account_id = $outParams->account_id;
 
 
+            //TODO: Fix the login sequence, something is wrong in the procedure for this, it is not returning the account_id
+
             // Use $userId as needed
             if ($message == 'User login successful.') {
                 return response()->json(['success' => $message, 'account_id' => $account_id], 200);
@@ -104,12 +106,17 @@ class AccountController extends Controller
             $subscriptionId = $request->input('subscription_id');
             $email = $request->input('email');
 
-            $result = DB::select('CALL Register_User(?, ?, ?, @a)', [$email, $hashedPassword, $subscriptionId]);
-            if ($result[0] == 'User registered successfully.') {
+            DB::select('CALL Register_User(?, ?, ?, @result_message)', [$email, $hashedPassword, $subscriptionId]);
+
+            $result = DB::select('SELECT @result_message AS message')[0];
+
+            $message = $result->message;
+
+            if ($message == 'User registered successfully.') {
                 return response()->json([
                     'message' => 'User registered successfully.',
                 ], 201);
-            } elseif ($result[0] == 'Email already exists.') {
+            } elseif ($message == 'Email already exists.') {
                 return response()->json([
                     'message' => 'Email already exists.',
                 ], 401);
@@ -176,11 +183,14 @@ class AccountController extends Controller
 
             $password = Crypt::encrypt($password);
             //Make this work with tokens somehow
-            $result = DB::select('CALL Update_Password(?, ?)', $email, $password);
-            if ($result[0] == 'Password updated successfully.') {
-                return response()->json(['message' => $result[0]], 200);
+            DB::select('CALL Update_Password(?, ?, @result_message)', [$email, $password]);
+            $result = DB::select('SELECT @result_message AS result_message')[0];
+            $message = $result->result_message;
+
+            if ($message == 'Password updated successfully.') {
+                return response()->json(['message' => $message], 200);
             } else {
-                return response()->json(['error' => $result[0]], 404);
+                return response()->json(['error' => $message], 404);
             }
 
         } catch (\Exception $e) {
@@ -195,12 +205,15 @@ class AccountController extends Controller
     public function blockAccount($email)
     {
         try {
-            $result = DB::select('CALL Block_User(?)', $email);
+            DB::select('CALL Block_User(?, @)', $email);
 
-            if ($result[0] == 'User successfully blocked.') {
-                return response()->json(['message' => $result[0]], 200);
-            } elseif ($result[0] == 'User not found.') {
-                return response()->json(['error' => $result[0]], 404);
+            $result = DB::select('SELECT @message AS message')[0];
+            $message = $result->message;
+
+            if ($message == 'User successfully blocked.') {
+                return response()->json(['message' => $message], 200);
+            } elseif ($message == 'User not found.') {
+                return response()->json(['error' => $message], 404);
             }
 
         } catch (\Exception $e) {
@@ -216,12 +229,16 @@ class AccountController extends Controller
     {
         $profile_id = $request->input('profile_id');
 
-        $result = DB::select('CALL Remove_Profile(?)', [$profile_id]);
+        DB::select('CALL Remove_Profile(?, @message)', [$profile_id]);
 
-        if ($result[0] == 'Profile removed successfully.') {
-            return response()->json(['message' => $result[0]], 200);
+        $result = DB::select('SELECT @message AS message')[0];
+
+        $message = $result->message;
+
+        if ($message == 'Profile removed successfully.') {
+            return response()->json(['message' => $message], 200);
         } else {
-            return response()->json(['message' => $result[0]], 404);
+            return response()->json(['message' => $message], 404);
         }
     }
 
@@ -245,13 +262,16 @@ class AccountController extends Controller
         $profile_image = $request->input('profile_image');
         $profile_movies_preferred = $request->input('profile_movies_preferred');
 
-        $result = DB::select('CALL Add_Profile(?, ?, ?, ?, ?, ?)', [$account_id, $profile_name, $profile_image,
+        DB::select('CALL Add_Profile(?, ?, ?, ?, ?, ?, @result_message)', [$account_id, $profile_name, $profile_image,
             $profile_age, $profile_lang, $profile_movies_preferred]);
 
-        if ($result[6] == 'Profile_Added_Successfully') {
+        $result = DB::select('SELECT @result_message AS result_message')[0];
+        $message = $result->result_message;
+
+        if ($message == 'Profile_Added_Successfully.') {
             return response()->json(['message' => 'Profile added successfully.'], 201);
         } else {
-            return response()->json(['message' => $result[6]], 404);
+            return response()->json(['message' => $message], 404);
         }
     }
 
