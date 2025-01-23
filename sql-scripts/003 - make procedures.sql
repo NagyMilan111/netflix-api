@@ -541,15 +541,19 @@ DELIMITER //
 CREATE PROCEDURE Update_Pause_Spot(
     IN input_profile_id INT,
     IN input_media_id INT,
-    IN input_pause_spot VARCHAR(255)
+    IN input_pause_spot VARCHAR(255),
+    OUT output_message VARCHAR(255),
+    OUT output_pause_spot VARCHAR(255)
 )
 BEGIN
     DECLARE row_count INT;
 
     -- Validate the profile_id
     IF NOT EXISTS (SELECT 1 FROM Profile WHERE profile_id = input_profile_id) THEN
+        SET output_message = 'Invalid profile_id.';
+        SET output_pause_spot = NULL;
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Invalid profile_id.';
+            SET MESSAGE_TEXT = output_message;
     END IF;
 
     -- Update the pause_spot for the given media
@@ -561,12 +565,15 @@ BEGIN
     SET row_count = ROW_COUNT();
 
     IF row_count = 0 THEN
+        SET output_message = 'Failed to update pause spot or media not found.';
+        SET output_pause_spot = NULL;
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Failed to update pause spot or media not found.';
+            SET MESSAGE_TEXT = output_message;
     END IF;
 
     -- Success message
-    SELECT 'Media paused.' AS message, input_pause_spot AS pause_spot;
+    SET output_message = 'Media paused.';
+    SET output_pause_spot = input_pause_spot;
 END //
 
 DELIMITER ;
@@ -575,10 +582,12 @@ DELIMITER //
 
 CREATE PROCEDURE Fetch_Pause_Spot(
     IN input_profile_id INT,
-    IN input_media_id INT
+    IN input_media_id INT,
+    OUT output_message VARCHAR(255),
+    OUT output_pause_spot VARCHAR(255)
 )
 BEGIN
-    DECLARE pause_spot VARCHAR(255);
+    DECLARE pause_spot TIME;
     DECLARE media_exists INT;
 
     -- Validate that the media exists
@@ -587,8 +596,10 @@ BEGIN
     WHERE media_id = input_media_id;
 
     IF media_exists = 0 THEN
+        SET output_message = 'Media not found.';
+        SET output_pause_spot = NULL;
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Media not found.';
+            SET MESSAGE_TEXT = output_message;
     END IF;
 
     -- Fetch the last pause spot
@@ -598,21 +609,27 @@ BEGIN
 
     -- Check if the watch data exists
     IF pause_spot IS NULL THEN
+        SET output_message = 'No watch data found for the profile and media.';
+        SET output_pause_spot = NULL;
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'No watch data found for the profile and media.';
+            SET MESSAGE_TEXT = output_message;
     END IF;
 
     -- Success message
-    SELECT 'Media resumed.' AS message, pause_spot AS resume_at;
+    SET output_message = 'Media resumed.';
+    SET output_pause_spot = pause_spot;
 END //
 
 DELIMITER ;
+
 
 DELIMITER //
 
 CREATE PROCEDURE Log_Play_Action(
     IN input_profile_id INT,
-    IN input_media_id INT
+    IN input_media_id INT,
+    OUT output_message VARCHAR(255),
+    OUT output_media_id INT
 )
 BEGIN
     DECLARE media_exists INT;
@@ -623,8 +640,10 @@ BEGIN
     WHERE media_id = input_media_id;
 
     IF media_exists = 0 THEN
+        SET output_message = 'Media not found.';
+        SET output_media_id = NULL;
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Media not found.';
+            SET MESSAGE_TEXT = output_message;
     END IF;
 
     -- Log play action with update or insert
@@ -635,10 +654,12 @@ BEGIN
                          last_watch_date = NOW();
 
     -- Success message
-    SELECT 'Media is playing.' AS message, input_media_id AS media_id;
+    SET output_message = 'Media is playing.';
+    SET output_media_id = input_media_id;
 END //
 
 DELIMITER ;
+
 
 DELIMITER //
 

@@ -202,10 +202,12 @@ class AccountController extends Controller
     /**
      * Block an account by its ID.
      */
-    public function blockAccount($email)
+    public function blockAccount(Request $request)
     {
+
+        $email = $request->input('email');
         try {
-            DB::select('CALL Block_User(?, @)', $email);
+            DB::select('CALL Block_User(?, @message)', [$email]);
 
             $result = DB::select('SELECT @message AS message')[0];
             $message = $result->message;
@@ -249,10 +251,10 @@ class AccountController extends Controller
     {
         // Validate the request
         $validatedData = $request->validate([
-            'account_id' => 'required|integer|exists:Account,account_id',
+            'account_id' => 'required|integer',
             'profile_name' => 'required|string|max:255',
             'profile_age' => 'required|integer|min:1',
-            'profile_lang' => 'required|integer|exists:Language,lang_id',
+            'profile_lang' => 'required|integer',
         ]);
 
         $account_id = $validatedData['account_id'];
@@ -268,7 +270,7 @@ class AccountController extends Controller
         $result = DB::select('SELECT @result_message AS result_message')[0];
         $message = $result->result_message;
 
-        if ($message == 'Profile_Added_Successfully.') {
+        if ($message == 'Profile added successfully.') {
             return response()->json(['message' => 'Profile added successfully.'], 201);
         } else {
             return response()->json(['message' => $message], 404);

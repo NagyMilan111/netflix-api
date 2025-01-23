@@ -15,13 +15,13 @@ class MediaController extends Controller
         $profile_id = $request->input('profile_id');
         $media_id = $request->input('media_id');
 
-        DB::select('CALL Log_Play_Action(?, ?, $message, @media_id)', [$profile_id, $media_id]);
+        DB::select('CALL Log_Play_Action(?, ?, @message, @input_media_id)', [$profile_id, $media_id]);
 
         $result = DB::select('SELECT @message as message, @input_media_id as input_media_id')[0];
         $msg = $result->message;
         $input_media_id = $result->input_media_id;
 
-        if ($result[0] == 'Media is playing.') {
+        if ($msg == 'Media is playing.') {
             return response()->json(['message' => 'Media is playing.', 'media_id' => $input_media_id]);
         } else {
             return response()->json(['message' => $msg, 'media_id' => $input_media_id]);
