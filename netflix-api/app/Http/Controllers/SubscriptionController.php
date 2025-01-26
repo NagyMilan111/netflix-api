@@ -10,10 +10,12 @@ class SubscriptionController extends Controller
     /**
      * Get subscription details for a user.
      */
-    public function getSubscriptionDetails($userId)
+    public function getSubscriptionDetails(Request $request)
     {
 
-        $result = DB::select('SELECT * FROM Get_Subscription_Details WHERE user_id = ?', [$userId]);
+        $account_id = $request->input('account_id');
+
+        $result = DB::select('SELECT * FROM Get_Subscription_Details WHERE account_id = ?', [$account_id]);
 
         if ($result[0] == null) {
             return response()->json(['error' => 'Subscription details not found.'], 404);
@@ -29,10 +31,9 @@ class SubscriptionController extends Controller
     public function updateSubscription(Request $request)
     {
 
-
-        $user_id = $request->input('user_id');
+        $account_id = $request->input('account_id');
         $subscription_id = $request->input('subscription_id');
-        DB::select('CALL Update_User_Subscription(?, ?)', [$user_id, $subscription_id]);
+        DB::select('CALL Update_Account_Subscription(?, ?, @message)', [$account_id, $subscription_id]);
 
         $result = DB::select('SELECT @message as message')[0];
         $message = $result->message;
@@ -40,7 +41,7 @@ class SubscriptionController extends Controller
         if ($message == 'Subscription updated successfully.') {
             return response()->json(['message' => 'Subscription updated successfully.'], 200);
         }
-        elseif ($result[0] = 'Failed to update subscription.'){
+        elseif ($message = 'Failed to update subscription.'){
             return response()->json(['error' => $message], 400);
         }
         else {

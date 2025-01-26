@@ -450,6 +450,7 @@ END //
 DELIMITER ;
 
 DELIMITER //
+
 CREATE PROCEDURE Get_Watch_List (
     IN p_profile_id INT,
     OUT result_message VARCHAR(255)
@@ -457,20 +458,24 @@ CREATE PROCEDURE Get_Watch_List (
 BEGIN
     DECLARE watchlist_exists INT;
 
+    -- Check if the watchlist exists for the given profile
     SELECT COUNT(*) INTO watchlist_exists
-    FROM Profile_Watch_list
+    FROM Profile_Watch_List
     WHERE profile_id = p_profile_id;
 
     IF watchlist_exists = 0 THEN
         SET result_message = 'No watchlist found for this profile.';
     ELSE
-        SELECT media_id, series_id
+        -- Concatenate media_id and series_id into a single string for result_message
+        SELECT GROUP_CONCAT(CONCAT('Media ID: ', media_id, ', Series ID: ', series_id) SEPARATOR '; ')
         INTO result_message
         FROM Profile_Watch_List
         WHERE profile_id = p_profile_id;
     END IF;
 END //
+
 DELIMITER ;
+
 
 DELIMITER //
 CREATE PROCEDURE Register_User (
@@ -587,7 +592,7 @@ CREATE PROCEDURE Fetch_Pause_Spot(
     OUT output_pause_spot VARCHAR(255)
 )
 BEGIN
-    DECLARE pause_spot TIME;
+    DECLARE p_pause_spot TIME;
     DECLARE media_exists INT;
 
     -- Validate that the media exists
@@ -603,12 +608,12 @@ BEGIN
     END IF;
 
     -- Fetch the last pause spot
-    SELECT pause_spot INTO pause_spot
+    SELECT p_pause_spot INTO p_pause_spot
     FROM Profile_Watched_Media
     WHERE profile_id = input_profile_id AND media_id = input_media_id;
 
     -- Check if the watch data exists
-    IF pause_spot IS NULL THEN
+    IF p_pause_spot IS NULL THEN
         SET output_message = 'No watch data found for the profile and media.';
         SET output_pause_spot = NULL;
         SIGNAL SQLSTATE '45000'
@@ -617,7 +622,7 @@ BEGIN
 
     -- Success message
     SET output_message = 'Media resumed.';
-    SET output_pause_spot = pause_spot;
+    SET output_pause_spot = p_pause_spot;
 END //
 
 DELIMITER ;
@@ -665,7 +670,8 @@ DELIMITER //
 
 CREATE PROCEDURE Update_Profile_Preferences(
     IN input_profile_id INT,
-    IN input_profile_movies_preferred BOOLEAN
+    IN input_profile_movies_preferred BOOLEAN,
+    OUT output_message VARCHAR(255)
 )
 BEGIN
     DECLARE profile_exists INT;
@@ -677,8 +683,9 @@ BEGIN
     WHERE profile_id = input_profile_id;
 
     IF profile_exists = 0 THEN
+        SET output_message = 'Profile not found.';
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Profile not found.';
+            SET MESSAGE_TEXT = output_message;
     END IF;
 
     -- Update preferences in the database
@@ -690,35 +697,37 @@ BEGIN
     SET rows_affected = ROW_COUNT();
 
     IF rows_affected = 0 THEN
+        SET output_message = 'Failed to update preferences.';
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Failed to update preferences.';
+            SET MESSAGE_TEXT = output_message;
     END IF;
 
     -- Success message
-    SELECT 'Preferences updated successfully.' AS message;
+    SET output_message = 'Preferences updated successfully.';
 END //
 
 DELIMITER ;
 
+
 DELIMITER //
 
-CREATE PROCEDURE Update_User_Subscription(
-    IN input_user_id INT,
-    IN input_subscription_id INT
+CREATE PROCEDURE Update_Account_Subscription(
+    IN input_account_id INT,
+    IN input_subscription_id INT,
+    OUT result_message VARCHAR(255)
 )
 BEGIN
     DECLARE account_exists INT;
     DECLARE subscription_exists INT;
     DECLARE rows_affected INT;
 
-    -- Validate that the user exists
+    -- Validate that the account exists
     SELECT COUNT(*) INTO account_exists
     FROM Account
-    WHERE account_id = input_user_id;
+    WHERE account_id = input_account_id;
 
     IF account_exists = 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'User not found.';
+        SET result_message = 'Account not found.';
     END IF;
 
     -- Validate that the subscription exists
@@ -727,29 +736,27 @@ BEGIN
     WHERE subscription_id = input_subscription_id;
 
     IF subscription_exists = 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Subscription not found.';
+        SET result_message = 'Subscription not found.';
     END IF;
 
-    -- Update the subscription details for the given user
+    -- Update the subscription details for the given account
     UPDATE Account
-    SET
-        subscription_id = input_subscription_id
-    WHERE account_id = input_user_id;
+    SET subscription_id = input_subscription_id
+    WHERE account_id = input_account_id;
 
     -- Check if any row was updated
     SET rows_affected = ROW_COUNT();
 
     IF rows_affected = 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Failed to update subscription.';
+        SET result_message = 'Failed to update subscription.';
     END IF;
 
     -- Success message
-    SELECT 'Subscription updated successfully.' AS message;
+    SET result_message = 'Subscription updated successfully.';
 END //
 
 DELIMITER ;
+
 
 DELIMITER //
 
@@ -807,35 +814,46 @@ DELIMITER //
 CREATE PROCEDURE Insert_Into_Profile_Watch_List(
     IN input_profile_id INT,
     IN input_media_id INT,
-    IN input_series_id INT
+    IN input_series_id INT,
+    OUT result_message VARCHAR(255)
 )
 BEGIN
     -- Insert a new row into the Profile_Watch_List table
     INSERT INTO Profile_Watch_List (profile_id, media_id, series_id)
     VALUES (input_profile_id, input_media_id, input_series_id);
 
-    -- Success message
-    SELECT 'Row inserted into Profile_Watch_List successfully.' AS message;
+    -- Set success message
+    SET result_message = 'Row inserted into Profile_Watch_List successfully.';
 END //
 
 DELIMITER ;
+
 
 DELIMITER //
 
 CREATE PROCEDURE Delete_From_Profile_Watch_List(
     IN input_profile_id INT,
     IN input_media_id INT,
-    IN input_series_id INT
+    IN input_series_id INT,
+    OUT result_message VARCHAR(255)
 )
 BEGIN
     -- Delete the row from the Profile_Watch_List table
     DELETE FROM Profile_Watch_List
     WHERE profile_id = input_profile_id
       AND media_id = input_media_id
-      AND series_id = input_series_id;
+      AND (
+        (series_id IS NULL AND input_series_id IS NULL) OR
+        (series_id = input_series_id)
+        );
 
-    -- Success message
-    SELECT 'Row deleted from Profile_Watch_List successfully.' AS message;
+    -- Check if any row was deleted
+    IF ROW_COUNT() > 0 THEN
+        SET result_message = 'Row deleted from Profile_Watch_List successfully.';
+    ELSE
+        SET result_message = 'No matching row found to delete.';
+    END IF;
 END //
 
 DELIMITER ;
+

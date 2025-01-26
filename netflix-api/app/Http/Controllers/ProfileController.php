@@ -11,10 +11,17 @@ class ProfileController extends Controller
     /**
      * Update preferences for a profile.
      */
+
+    /*TODO: This will give an error if we try to update the field with false, if the field is already false (same goes for true).
+    Procedure has to be fixed to account for this. */
+
     public function updatePreferences(Request $request)
     {
 
-        DB::select('CALL Update_Profile_Preferences(?)', [$request->input('profile_id')]);
+        $profile_id = $request->input('profile_id');
+        $movies_preferred = $request->input('movies_preferred');
+
+        DB::select('CALL Update_Profile_Preferences(?, ?, @message)', [$profile_id, $movies_preferred]);
         $result = DB::select('SELECT @message as message')[0];
         $message = $result->message;
 
@@ -32,18 +39,20 @@ class ProfileController extends Controller
     /**
      * Get a user's watchlist.
      */
+
+    //TODO: This returns null right now, fix the stored procedure for it
     public function getToWatchList(Request $request)
     {
 
         $profile_id = $request->input('profile_id');
         // Fetch watchlist for the given account
-        DB::select('CALL Get_Watch_List(?)', [$profile_id]);
+        DB::select('CALL Get_Watch_List(?, @message)', [$profile_id]);
 
-        $result = DB::select('SELECT @result_message as message')[0];
+        $result = DB::select('SELECT @message as message')[0];
         $message = $result->message;
 
-        if($message != null) {
-            return response()->json(['watchHistory' => $message], 200);
+        if($message != 'No watchlist found for this profile.') {
+            return response()->json(['watchList' => $message], 200);
         }
         else {
             return response()->json(['error' => 'Watch List not found.'], 404);
@@ -65,9 +74,9 @@ class ProfileController extends Controller
         $series_id = $request->input('series_id');
         $profile_id = $request->input('profile_id');
 
-        if ($validatedData['action'] === 'add') {
+        if ($validatedData['action'] == 'add') {
             // Add media to the watchlist
-            DB::select('CALL Insert_Into_Profile_Watch_List(?, ?, ?)', [$profile_id, $media_id, $series_id]);
+            DB::select('CALL Insert_Into_Profile_Watch_List(?, ?, ?, @message)', [$profile_id, $media_id, $series_id]);
             $result = DB::select('SELECT @message as message')[0];
             $message = $result->message;
 
@@ -80,7 +89,7 @@ class ProfileController extends Controller
             }
         } else {
             // Remove media from the watchlist
-            DB::select('CALL Delete_From_Profile_Watch_List(?, ?, ?)', [$profile_id, $media_id, $series_id]);
+            DB::select('CALL Delete_From_Profile_Watch_List(?, ?, ?, @message)', [$profile_id, $media_id, $series_id]);
 
             $result = DB::select('SELECT @message as message')[0];
             $message = $result->message;
@@ -92,7 +101,7 @@ class ProfileController extends Controller
             }
             else
             {
-                return response()->json(['message' => 'Something went wrong.'], 500);
+                return response()->json(['message' => $message], 404);
             }
         }
     }

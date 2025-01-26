@@ -62,7 +62,7 @@ class MediaController extends Controller
 
         DB::select('CALL Fetch_Pause_Spot(?, ?, @message, @resume_at)', [$profile_id, $media_id]);
 
-        $result = DB::select('SELECT @message as message, @pause_spot as resume_at')[0];
+        $result = DB::select('SELECT @message as message, @resume_at as resume_at')[0];
         $msg = $result->message;
         $resume_at = $result->resume_at;
 
