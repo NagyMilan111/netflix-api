@@ -81,7 +81,7 @@ Route::prefix('series')->group(function () {
 //Analytics routes
 Route::prefix('analytics')->group(function () {
     Route::get('/top-ten/{type}/{category}', [AnalyticsController::class, 'topTen']);
-    Route::get('/bottom-ten/{type}/{category}', [AnalyticsController::class, 'bottomTen']);
+    Route::get('/bottom-ten-watched/{category}', [AnalyticsController::class, 'bottomTen']);
     Route::get('/revenue', [AnalyticsController::class, 'getAllRevenue']);
-    Route::get('/sort-all-by-views/{type}/{category}', [AnalyticsController::class, 'sortAllByViews']);
+    Route::get('/sort-all-by-views/{category}', [AnalyticsController::class, 'sortAllByViews']);
 });
