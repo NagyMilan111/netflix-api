@@ -4,70 +4,124 @@ namespace App\Http\Controllers;
 
 use App\Models\Series;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SeriesController extends Controller
 {
     // List all series
-    public function index()
+    public function listAllSeries()
     {
-        $series = Series::all();
-        return response()->json($series);
+        try {
+
+            $series = DB::select('SELECT * FROM List_Series');
+            return response()->json(['values' => $series]);
+        } catch (\Exception $e) {
+            return response()->json(["message" => "An error occurred while listing series.", "error" => $e], 500);
+        }
     }
 
     // Show a specific series
-    public function show($id)
+    public function getSeriesById($id)
     {
-        $series = Series::find($id);
+        try {
+            $series = DB::select('SELECT * FROM List_Series WHERE series_id = ?', [$id]);
 
-        if (!$series) {
-            return response()->json(['message' => 'Series not found'], 404);
+            if ($series == null) {
+                return response()->json(['message' => 'Series not found'], 404);
+            } else {
+                return response()->json(['values' => $series]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
         }
-
-        return response()->json($series);
     }
 
     // Create a new series
-    public function store(Request $request)
+    public function createNewSeries(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'genre_id' => 'required|exists:genres,genre_id', // Updated to match the genres table's column
-            'number_of_seasons' => 'required|integer|min:1',
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'number_of_seasons' => 'required|integer|min:1',
+            ]);
 
-        $series = Series::create($request->all());
-        return response()->json($series, 201);
+            $title = $request->input('title');
+            $number_of_seasons = $request->input('number_of_seasons');
+            $genre_id = $request->input('genre_id');
+
+            DB::select('CALL Insert_Series(?, ?, ?, @message)', [$title, $genre_id, $number_of_seasons]);
+
+            $result = DB::select('SELECT @message as message')[0];
+
+            $message = $result->message;
+
+            if ($message == 'Series inserted successfully.') {
+                return response()->json(['message' => 'Series inserted successfully.'], 201);
+            } else {
+                return response()->json(['message' => $message], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
+        }
     }
 
+
+    //TODO: Fix the stored procedure for this, currently it will not return 'Series not found.', instead it defaults to the last error msg
     // Update an existing series
-    public function update(Request $request, $id)
+    public function updateSeries(Request $request, $id)
     {
-        $series = Series::find($id);
 
-        if (!$series) {
-            return response()->json(['message' => 'Series not found'], 404);
+        try {
+            $request->validate([
+                'title' => 'sometimes|required|string|max:255',
+                'number_of_seasons' => 'sometimes|required|integer|min:1',
+            ]);
+
+            $title = $request->input('title');
+            $number_of_seasons = $request->input('number_of_seasons');
+            $genre_id = $request->input('genre_id');
+
+            DB::select('CALL Update_Series(?, ?, ?, ?, @message)', [$id, $title, $genre_id, $number_of_seasons]);
+
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Series updated successfully.') {
+                return response()->json(['message' => 'Series updated successfully.'], 200);
+            } elseif ($message == 'Series not found.') {
+                return response()->json(['message' => 'Series not found.'], 404);
+            } else {
+                return response()->json(['message' => $message], 500);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
         }
 
-        $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'genre_id' => 'sometimes|required|exists:genres,genre_id', // Updated validation
-            'number_of_seasons' => 'sometimes|required|integer|min:1',
-        ]);
-
-        $series->update($request->all());
-        return response()->json($series);
     }
 
+
+    //TODO: Same as above
     // Delete a series
-    public function destroy($id)
+    public function deleteSeries($id)
     {
-        $series = Series::find($id);
+        try {
 
-        if (!$series) {
-            return response()->json(['message' => 'Series not found'], 404);
+            DB::select('CALL Delete_Series(?, @message)', [$id]);
+
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Series deleted successfully.') {
+                return response()->json(['message' => 'Series deleted successfully.'], 200);
+            } elseif ($message == 'Series not found.') {
+                return response()->json(['message' => 'Series not found.'], 404);
+            } else {
+                return response()->json(['message' => $message], 500);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
         }
-
-        $series->delete();
-        return response()->json(['message' => 'Series deleted successfully']);
     }
 }

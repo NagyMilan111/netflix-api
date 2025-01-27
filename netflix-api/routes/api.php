@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{
+use App\Http\Controllers\{AnalyticsController,
     MainApiController,
     AccountController,
     MediaController,
@@ -10,8 +10,7 @@ use App\Http\Controllers\{
     TokenController,
     ExternalApiController,
     EpisodeController,
-    SeriesController
-};
+    SeriesController};
 
 // API Routes
 Route::any('/api/{endpoint}', [MainApiController::class, 'routeRequest']);
@@ -70,10 +69,19 @@ Route::prefix('episodes')->group(function () {
     Route::delete('/{id}', [EpisodeController::class, 'destroy'])->whereNumber('id'); // Delete an episode
 });
 
+//Series routes
 Route::prefix('series')->group(function () {
-    Route::get('/', [SeriesController::class, 'index']);         // List all series
-    Route::get('/{id}', [SeriesController::class, 'show']);      // Show a specific series
-    Route::post('/', [SeriesController::class, 'store']);        // Create a new series
-    Route::put('/{id}', [SeriesController::class, 'update']);    // Update an existing series
-    Route::delete('/{id}', [SeriesController::class, 'destroy']);// Delete a series
+    Route::get('/', [SeriesController::class, 'listAllSeries']);         // List all series
+    Route::get('/{id}', [SeriesController::class, 'getSeriesById']);      // Show a specific series
+    Route::post('/', [SeriesController::class, 'createNewSeries']);        // Create a new series
+    Route::put('/{id}', [SeriesController::class, 'updateSeries']);    // Update an existing series
+    Route::delete('/{id}', [SeriesController::class, 'deleteSeries']);      // Delete a series
+});
+
+//Analytics routes
+Route::prefix('analytics')->group(function () {
+    Route::get('/top-ten/{type}/{category}', [AnalyticsController::class, 'topTen']);
+    Route::get('/bottom-ten/{type}/{category}', [AnalyticsController::class, 'bottomTen']);
+    Route::get('/revenue', [AnalyticsController::class, 'getAllRevenue']);
+    Route::get('/sort-all-by-views/{type}/{category}', [AnalyticsController::class, 'sortAllByViews']);
 });

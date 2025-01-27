@@ -269,14 +269,14 @@ BEGIN
     DECLARE watchlist_exists INT;
 
     SELECT COUNT(*) INTO watchlist_exists
-    FROM Watchlist
+    FROM Profile_Watch_List
     WHERE profile_id = p_profile_id AND media_id = p_media_id AND series_id = p_series_id;
 
     IF watchlist_exists = 0 THEN
         SET result_message = 'No watchlist exists for this profile.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        DELETE FROM Watchlist
+        DELETE FROM Profile_Watch_List
         WHERE profile_id = p_profile_id AND media_id = p_media_id AND series_id = p_series_id;
 
         SET result_message = 'Removed from watchlist successfully.';
@@ -762,49 +762,70 @@ DELIMITER //
 
 CREATE PROCEDURE Insert_Token(
     IN input_account_id INT,
-    IN input_token VARCHAR(255)
+    IN input_token VARCHAR(255),
+    OUT result_message VARCHAR(255)
 )
 BEGIN
     -- Insert the token into the Tokens table
     INSERT INTO Tokens (account_id, token)
     VALUES (input_account_id, input_token);
 
-    -- Success message
-    SELECT 'Token inserted successfully.' AS message;
+    -- Set the success message
+    SET result_message = 'Token inserted successfully.';
 END //
 
 DELIMITER ;
+
 
 DELIMITER //
 
 CREATE PROCEDURE Delete_Token(
-    IN input_token VARCHAR(255)
+    IN input_token VARCHAR(255),
+    OUT result_message VARCHAR(255)
 )
 BEGIN
+    DECLARE rows_affected INT;
+
     -- Delete the token from the Tokens table
     DELETE FROM Tokens
     WHERE token = input_token;
 
-    -- Success message
-    SELECT 'Token deleted successfully.' AS message;
+    -- Check if any row was deleted
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Token deleted successfully.';
+    ELSE
+        SET result_message = 'No matching token found to delete.';
+    END IF;
 END //
 
 DELIMITER ;
+
 
 DELIMITER //
 
 CREATE PROCEDURE Update_Token(
     IN old_token VARCHAR(255),
-    IN new_token VARCHAR(255)
+    IN new_token VARCHAR(255),
+    OUT result_message VARCHAR(255)
 )
 BEGIN
+    DECLARE rows_affected INT;
+
     -- Update the token in the Tokens table
     UPDATE Tokens
     SET token = new_token
     WHERE token = old_token;
 
-    -- Success message
-    SELECT 'Token updated successfully.' AS message;
+    -- Check if any row was updated
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Token updated successfully.';
+    ELSE
+        SET result_message = 'No matching token found to update.';
+    END IF;
 END //
 
 DELIMITER ;
@@ -852,6 +873,111 @@ BEGIN
         SET result_message = 'Row deleted from Profile_Watch_List successfully.';
     ELSE
         SET result_message = 'No matching row found to delete.';
+    END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Insert_Series(
+    IN input_title VARCHAR(255),
+    IN input_genre_id INT,
+    IN input_number_of_seasons INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE rows_affected INT;
+
+    -- Insert the values into the Series table
+    INSERT INTO Series (title, genre_id, number_of_seasons)
+    VALUES (input_title, input_genre_id, input_number_of_seasons);
+
+    -- Check if the insertion was successful
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Series inserted successfully.';
+    ELSE
+        SET result_message = 'Failed to insert series.';
+    END IF;
+END //
+
+DELIMITER ;
+
+
+DELIMITER //
+
+CREATE PROCEDURE Update_Series(
+    IN input_id INT,
+    IN input_title VARCHAR(255),
+    IN input_genre_id INT,
+    IN input_number_of_seasons INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE series_exists INT;
+    DECLARE rows_affected INT;
+
+    -- Check if the series exists
+    SELECT COUNT(*) INTO series_exists
+    FROM Series
+    WHERE series_id = input_id;
+
+    IF series_exists = 0 THEN
+        SET result_message = 'Series not found.';
+    END IF;
+
+    -- Update the Series table with the provided values
+    UPDATE Series
+    SET
+        title = input_title,
+        genre_id = input_genre_id,
+        number_of_seasons = input_number_of_seasons
+    WHERE series_id = input_id;
+
+    -- Check if any row was updated
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 AND result_message <> 'Series not found.' THEN
+        SET result_message = 'Series updated successfully.';
+    ELSE
+        SET result_message = 'Failed to update series. No changes made.';
+    END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Delete_Series(
+    IN input_id INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE series_exists INT;
+    DECLARE rows_affected INT;
+
+    -- Check if the series exists
+    SELECT COUNT(*) INTO series_exists
+    FROM Series
+    WHERE series_id = input_id;
+
+    IF series_exists = 0 THEN
+        SET result_message = 'Series not found.';
+    END IF;
+
+    -- Delete the series from the Series table
+    DELETE FROM Series
+    WHERE series_id = input_id;
+
+    -- Check if any row was deleted
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Series deleted successfully.';
+    ELSE
+        SET result_message = 'Failed to delete series.';
     END IF;
 END //
 

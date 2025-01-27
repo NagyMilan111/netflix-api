@@ -12,11 +12,11 @@ class TokenController extends Controller
      */
     public function generateToken(Request $request)
     {
-        $userId = $request->get('userId');
+        $account_id = $request->get('account_id');
         // Check if the user exists
-        $user = DB::select('SELECT * FROM Get_Account_Id WHERE account_id = ?', [$userId]);
+        $user = DB::select('SELECT * FROM Get_Account_Id WHERE account_id = ?', [$account_id]);
 
-        if (!$user) {
+        if ($user == null) {
             return response()->json(['error' => 'User not found'], 404);
         } else {
 
@@ -24,9 +24,12 @@ class TokenController extends Controller
             $token = bin2hex(random_bytes(40));
 
             // Insert the token into the database
-            $result = DB::select('CALL Insert_Token(?, ?)', [$userId, $token]);
+            DB::select('CALL Insert_Token(?, ?, @message)', [$account_id, $token]);
 
-            if ($result[0] == 'Token inserted successfully.') {
+            $result = DB::select('Select @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Token inserted successfully.') {
                 return response()->json(['token' => $token], 200);
             }
             else{
@@ -38,6 +41,7 @@ class TokenController extends Controller
     /**
      * Refresh a user's token.
      */
+    //TODO: Find out how to put tokens in the headers in postman requests to test this correctly
     public function refreshToken(Request $request)
     {
         $currentToken = $request->bearerToken();
@@ -49,7 +53,7 @@ class TokenController extends Controller
         // Fetch the current token from the database
         $tokenRecord = DB::select('SELECT * FROM Get_Token WHERE token = ?', [$currentToken]);
 
-        if ($tokenRecord[1] != null) {
+        if ($tokenRecord[0] == null) {
             return response()->json(['error' => 'Invalid token.'], 401);
         }
 
@@ -57,8 +61,11 @@ class TokenController extends Controller
         $newToken = bin2hex(random_bytes(40));
 
         // Update the token in the database
-        $result = DB::select('CALL Update_Token(?, ?)', [$currentToken, $newToken]);
-        if($result[0] == 'Token updated successfully.') {
+        DB::select('CALL Update_Token(?, ?, @message)', [$currentToken, $newToken]);
+        $result = DB::select('Select @message as message')[0];
+        $message = $result->message;
+
+        if($message == 'Token updated successfully.') {
             return response()->json(['token' => $newToken], 200);
         }
         else{
@@ -69,22 +76,27 @@ class TokenController extends Controller
     /**
      * Revoke a user's token.
      */
+
+
     public function revokeToken(Request $request)
     {
         $currentToken = $request->bearerToken();
 
         if (!$currentToken) {
-            return response()->json(['error' => 'No token provided'], 400);
+            return response()->json(['error' => 'No token provided.'], 400);
         }
 
         // Delete the token from the database
-        $result = DB::select('CALL Delete_Token(?)', [$currentToken]);
+        DB::select('CALL Delete_Token(?, @message)', [$currentToken]);
 
-        if ($result[0] == 'Token deleted successfully.') {
+        $result = DB::select('Select @message as message')[0];
+        $message = $result->message;
+
+        if ($message == 'Token deleted successfully.') {
             return response()->json(['message' => 'Token deleted successfully.'], 200);
         }
         else {
-            return response()->json(['error' => 'Token not found'], 404);
+            return response()->json(['error' => 'Token not found.'], 404);
         }
 
     }

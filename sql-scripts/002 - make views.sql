@@ -287,3 +287,11 @@ SELECT
 FROM
     Account;
 
+CREATE VIEW List_Series AS
+SELECT
+    series_id,
+    title,
+    number_of_seasons
+FROM
+    Series;
+
