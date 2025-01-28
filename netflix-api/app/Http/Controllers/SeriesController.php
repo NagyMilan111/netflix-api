@@ -9,29 +9,34 @@ use Illuminate\Support\Facades\DB;
 class SeriesController extends Controller
 {
     // List all series
-    public function listAllSeries()
+    public function listAllSeries(Request $request)
     {
         try {
             $series = DB::select('SELECT * FROM List_Series');
-            return response()->json(['values' => $series]);
+            if($series != null) {
+                return $this->respond(['values' => $series], $request, 200);
+            }
+            else{
+                return $this->respond(['error' => 'No series found.'], $request, 404);
+            }
         } catch (\Exception $e) {
-            return response()->json(["message" => "An error occurred while listing series.", "error" => $e], 500);
+            return $this->respond(["message" => "An error occurred while listing series.", "error" => $e], $request, 500);
         }
     }
 
     // Show a specific series
-    public function getSeriesById($id)
+    public function getSeriesById($id, Request $request)
     {
         try {
             $series = DB::select('SELECT * FROM List_Series WHERE series_id = ?', [$id]);
 
             if ($series == null) {
-                return response()->json(['message' => 'Series not found'], 404);
+                return $this->respond(['message' => 'Series not found'], $request, 404);
             } else {
-                return response()->json(['values' => $series]);
+                return $this->respond(['values' => $series], $request, 200);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -55,12 +60,12 @@ class SeriesController extends Controller
             $message = $result->message;
 
             if ($message == 'Series inserted successfully.') {
-                return response()->json(['message' => 'Series inserted successfully.'], 201);
+                return $this->respond(['message' => 'Series inserted successfully.'], $request, 201);
             } else {
-                return response()->json(['message' => $message], 500);
+                return $this->respond(['message' => $message], $request, 500);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -86,15 +91,15 @@ class SeriesController extends Controller
             $message = $result->message;
 
             if ($message == 'Series updated successfully.') {
-                return response()->json(['message' => 'Series updated successfully.'], 200);
+                return $this->respond(['message' => 'Series updated successfully.'], $request, 200);
             } elseif ($message == 'Series not found.') {
-                return response()->json(['message' => 'Series not found.'], 404);
+                return $this->respond(['message' => 'Series not found.'], $request, 404);
             } else {
-                return response()->json(['message' => $message], 500);
+                return $this->respond(['message' => $message], $request, 500);
             }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
 
     }
@@ -102,7 +107,7 @@ class SeriesController extends Controller
 
     //TODO: Same as above
     // Delete a series
-    public function deleteSeries($id)
+    public function deleteSeries($id, Request $request)
     {
         try {
 
@@ -112,15 +117,15 @@ class SeriesController extends Controller
             $message = $result->message;
 
             if ($message == 'Series deleted successfully.') {
-                return response()->json(['message' => 'Series deleted successfully.'], 200);
+                return $this->respond(['message' => 'Series deleted successfully.'], $request, 200);
             } elseif ($message == 'Series not found.') {
-                return response()->json(['message' => 'Series not found.'], 404);
+                return $this->respond(['message' => 'Series not found.'], $request, 404);
             } else {
-                return response()->json(['message' => $message], 500);
+                return $this->respond(['message' => $message], $request, 500);
             }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 }

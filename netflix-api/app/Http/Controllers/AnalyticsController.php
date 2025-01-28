@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class AnalyticsController extends Controller
 {
 
-    public function topTen($type, $category)
+    public function topTen($type, $category, Request $request)
     {
         $result = null;
 
@@ -38,17 +38,17 @@ class AnalyticsController extends Controller
             }
 
             if ($result != null) {
-                return response()->json(['values' => $result], 200);
+                return $this->respond(['values' => $result], $request, 200);
             } else {
-                return response()->json(['error' => 'No matching category or type.'], 404);
+                return $this->respond(['error' => 'No matching category or type.'], $request, 404);
             }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e]);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
-    public function bottomTen($category)
+    public function bottomTen($category, Request $request)
     {
         $result = null;
 
@@ -64,32 +64,32 @@ class AnalyticsController extends Controller
             }
 
             if ($result != null) {
-                return response()->json(['values' => $result], 200);
+                return $this->respond(['values' => $result], $request, 200);
             } else {
-                return response()->json(['error' => 'No matching category.'], 404);
+                return $this->respond(['error' => 'No matching category.'], $request, 404);
             }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e]);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
-    public function getAllRevenue()
+    public function getAllRevenue(Request $request)
     {
         try {
             $result = DB::select('SELECT * FROM Get_All_Revenue');
 
             if ($result != null) {
-                return response()->json(['values' => $result], 200);
+                return $this->respond(['values' => $result], $request, 200);
             } else {
-                return response()->json(['error' => 'No revenue found.'], 404);
+                return $this->respond(['error' => 'No revenue found.'], $request, 404);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e]);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
-    public function sortAllByViews($category)
+    public function sortAllByViews($category, Request $request)
     {
         $result = null;
 
@@ -105,13 +105,13 @@ class AnalyticsController extends Controller
             }
 
             if ($result != null) {
-                return response()->json(['values' => $result], 200);
+                return $this->respond(['values' => $result], $request, 200);
             } else {
-                return response()->json(['error' => 'No matching category.'], 404);
+                return $this->respond(['error' => 'No matching category.'], $request, 404);
             }
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e]);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 

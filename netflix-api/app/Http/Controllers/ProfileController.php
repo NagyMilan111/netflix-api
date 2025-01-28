@@ -26,15 +26,15 @@ class ProfileController extends Controller
             $message = $result->message;
 
             if ($message == 'Preferences updated successfully.') {
-                return response()->json(['message' => 'Preferences updated successfully.'], 200);
+                return $this->respond(['message' => 'Preferences updated successfully.'], $request, 200);
 
             } else if ($message == 'Failed to update preferences.') {
-                return response()->json(['error' => 'Failed to update preferences.'], 500);
+                return $this->respond(['error' => 'Failed to update preferences.'], $request, 500);
             } else {
-                return response()->json(['message' => $message], 404);
+                return $this->respond(['message' => $message], $request, 404);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -43,7 +43,7 @@ class ProfileController extends Controller
      */
 
     //TODO: This returns null right now, fix the stored procedure for it
-    public function getToWatchList($id)
+    public function getToWatchList($id, Request $request)
     {
         try {
             DB::select('CALL Get_Watch_List(?, @message)', [$id]);
@@ -52,12 +52,12 @@ class ProfileController extends Controller
             $message = $result->message;
 
             if ($message != 'No watchlist found for this profile.') {
-                return response()->json(['watchList' => $message], 200);
+                return $this->respond(['watchList' => $message], $request, 200);
             } else {
-                return response()->json(['error' => 'Watch List not found.'], 404);
+                return $this->respond(['error' => 'Watch List not found.'], $request, 404);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
 
     }
@@ -67,7 +67,6 @@ class ProfileController extends Controller
      */
     public function manageWatchList(Request $request, $id)
     {
-
         try {
             // Validate input
             $validatedData = $request->validate([
@@ -84,9 +83,9 @@ class ProfileController extends Controller
                 $message = $result->message;
 
                 if ($message == 'Row inserted into Profile_Watch_List successfully.') {
-                    return response()->json(['message' => 'Media added to watchlist.']);
+                    return $this->respond(['message' => 'Media added to watchlist.'], $request, 201);
                 } else {
-                    return response()->json(['message' => 'Something went wrong.'], 500);
+                    return $this->respond(['message' => 'Something went wrong.'], $request, 500);
                 }
             } else {
                 // Remove media from the watchlist
@@ -96,15 +95,15 @@ class ProfileController extends Controller
                 $message = $result->message;
 
                 if ($message == 'Row deleted from Profile_Watch_List successfully.') {
-                    return response()->json([
+                    return $this->respond([
                         'message' => 'Media removed from watchlist.'
-                    ]);
+                    ], $request, 200);
                 } else {
-                    return response()->json(['message' => $message], 404);
+                    return $this->respond(['message' => $message], $request, 404);
                 }
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 

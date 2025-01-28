@@ -21,7 +21,7 @@ Route::prefix('account')->group(function () {
     Route::post('/register', [AccountController::class, 'register']);
     Route::post('/reset-password', [AccountController::class, 'resetPassword']);
     Route::post('/logout', [AccountController::class, 'logout']);
-    Route::post('/block/{id}', [AccountController::class, 'blockAccount']);
+    Route::post('/block', [AccountController::class, 'blockAccount']);
     Route::delete('/{id}', [AccountController::class, 'deleteProfile'])->whereNumber('id');
     Route::post('/', [AccountController::class, 'addProfile']);
 

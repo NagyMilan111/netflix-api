@@ -18,16 +18,16 @@ class MediaController extends Controller
             DB::select('CALL Log_Play_Action(?, ?, @message, @input_media_id)', [$profile_id, $id]);
 
             $result = DB::select('SELECT @message as message, @input_media_id as input_media_id')[0];
-            $msg = $result->message;
+            $message = $result->message;
             $input_media_id = $result->input_media_id;
 
-            if ($msg == 'Media is playing.') {
-                return response()->json(['message' => 'Media is playing.', 'media_id' => $input_media_id]);
+            if ($message == 'Media is playing.') {
+                return $this->respond(['message' => $message, 'media_id' => $input_media_id], $request, 200);
             } else {
-                return response()->json(['message' => $msg, 'media_id' => $input_media_id]);
+                return $this->respond(['message' => $message, 'media_id' => $input_media_id], $request, 404);
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => $e]);
+            return $this->respond(['message' => $e], $request, 500);
         }
     }
 
@@ -48,13 +48,13 @@ class MediaController extends Controller
 
 
             if ($msg != 'Media paused.') {
-                return response()->json(['error' => $msg], 404);
+                return $this->respond(['error' => $msg], $request, 404);
             }
             else {
-                return response()->json(['message' => 'Media paused.', 'pause_spot' => $pause_spot], 200);
+                return $this->respond(['message' => 'Media paused.', 'pause_spot' => $pause_spot], $request, 200);
             }
         } catch (\Exception $e) {
-            return response()->json(['message' => $e]);
+            return $this->respond(['message' => $e], $request, 500);
         }
     }
 
@@ -73,13 +73,13 @@ class MediaController extends Controller
             $resume_at = $result->resume_at;
 
             if ($msg != 'Media resumed.') {
-                return response()->json(['error' => $msg], 404);
+                return $this->respond(['error' => $msg], $request, 404);
             } else {
-                return response()->json(['message' => 'Media resumed.', 'resume_at' => $resume_at], 200);
+                return $this->respond(['message' => 'Media resumed.', 'resume_at' => $resume_at], $request, 200);
             }
         }
         catch (\Exception $e) {
-            return response()->json(['message' => $e]);
+            return $this->respond(['message' => $e], $request, 500);
         }
     }
 }

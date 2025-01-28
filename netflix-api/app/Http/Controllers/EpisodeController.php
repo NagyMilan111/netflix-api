@@ -5,43 +5,43 @@ namespace App\Http\Controllers;
 use App\Models\Episode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use Spatie\ArrayToXml\ArrayToXml;
 
 class EpisodeController extends Controller
 {
     // List all episodes
-    public function getAllEpisodes()
+    public function getAllEpisodes(Request $request)
     {
         try {
             $result = DB::select('SELECT * FROM List_Episodes');
 
             if ($result == null) {
-                return response()->json(['error' => 'No episodes found.'], 404);
+                return $this->respond(['error' => 'No episodes found.'], $request, 404);
             } else {
-                return response()->json(['values' => $result], 200);
+                return $this->respond(['values' => $result], $request);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e->getMessage()], $request, 500);
         }
     }
 
     // Show a specific episode
-    public function getEpisodeById($id)
+    public function getEpisodeById($id, Request $request)
     {
         try {
             $result = DB::select('SELECT * FROM List_Episodes WHERE media_id = ?', [$id]);
+
             if ($result == null) {
-                return response()->json(['error' => 'No episode found with that id.'], 404);
+                return $this->respond(['error' => 'No episode found with that id.'], $request, 404);
             } else {
-                return response()->json(['values' => $result], 200);
+                return $this->respond(['values' => $result], $request);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e->getMessage()], $request, 500);
         }
     }
 
     // Create a new episode
-    //TODO: Fix the procedure so that it will exit if an episode is not found
     public function addNewEpisode(Request $request)
     {
         try {
@@ -49,6 +49,7 @@ class EpisodeController extends Controller
                 'title' => 'required|string|max:255',
                 'season' => 'required|integer',
             ]);
+
             $title = $request->input('title');
             $duration = $request->input('duration');
             $season = $request->input('season');
@@ -56,18 +57,16 @@ class EpisodeController extends Controller
             $genre_id = $request->input('genre_id');
 
             DB::select('CALL Insert_Episode(?, ?, ?, ?, ?, @message)', [$title, $duration, $series_id, $season, $genre_id]);
-
             $result = DB::select('SELECT @message as message')[0];
-
             $message = $result->message;
 
             if ($message == 'Episode inserted successfully.') {
-                return response()->json(['message' => $message], 201);
+                return $this->respond(['message' => $message], $request);
             } else {
-                return response()->json(['error' => $message], 500);
+                return $this->respond(['error' => $message], $request, 500);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e->getMessage()], $request, 500);
         }
     }
 
@@ -86,20 +85,19 @@ class EpisodeController extends Controller
             $message = $result->message;
 
             if ($message == 'Episode not found.') {
-                return response()->json(['error' => 'Episode not found.'], 404);
+                return $this->respond(['error' => $message], $request, 404);
             } elseif ($message == 'Failed to update episode.') {
-                return response()->json(['error' => 'Failed to update episode.'], 500);
+                return $this->respond(['error' => $message], $request, 500);
             } else {
-                return response()->json(['message' => $message], 200);
+                return $this->respond(['message' => $message], $request);
             }
-
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e->getMessage()], $request, 500);
         }
     }
 
     // Delete an episode
-    public function deleteEpisode($id)
+    public function deleteEpisode($id, Request $request)
     {
         try {
             DB::select('CALL Delete_Episode(?, @message)', [$id]);
@@ -107,15 +105,14 @@ class EpisodeController extends Controller
             $message = $result->message;
 
             if ($message == 'Episode not found.') {
-                return response()->json(['error' => 'Episode not found.'], 404);
+                return $this->respond(['error' => $message], $request, 404);
             } elseif ($message == 'Failed to delete episode.') {
-                return response()->json(['error' => 'Failed to delete episode.'], 500);
+                return $this->respond(['error' => $message], $request, 500);
             } else {
-                return response()->json(['message' => $message], 200);
+                return $this->respond(['message' => $message], $request);
             }
-
         } catch (\Exception $e) {
-            return response()->json(['error' => $e], 500);
+            return $this->respond(['error' => $e->getMessage()], $request, 500);
         }
     }
 }

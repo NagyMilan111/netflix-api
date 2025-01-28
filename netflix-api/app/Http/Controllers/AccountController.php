@@ -25,7 +25,7 @@ class AccountController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return $this->respond(['error' => $validator->errors()], $request, 400);
             }
             $email = $request->input('email');
             $password = $request->input('password');
@@ -46,42 +46,43 @@ class AccountController extends Controller
 
             // Use $userId as needed
             if ($message == 'User login successful.') {
-                return response()->json(['success' => $message, 'account_id' => $account_id], 200);
+                return $this->respond(['message' => $message, 'account_id' => $account_id], $request, 200);
             }
             if ($message == 'User not found.') {
-                return response()->json(['error' => $message], 404);
+                return $this->respond(['error' => $message], $request, 404);
             }
 
             // Verify the password
             if ($message == 'Incorrect password.') {
-                return response()->json(['error' => $message], 401);
+                return $this->respond(['error' => $message], $request, 401);
             }
 
             if ($message == 'User is blocked.') {
-                return response()->json(['error' => $message], 401);
+                return $this->respond(['error' => $message], $request, 401);
             }
             // Generate a token
             $token = bin2hex(random_bytes(40));
-            /*
-                        // Store the token in the database
-                        $insertTokenResult = DB::select('CALL Insert_Token(?, ?, @message)', [$result[1], $token]);
-                        if($insertTokenResult[0] == 'Token inserted successfully.') {
-                            return response()->json([
-                                'token' => $token,
-                                'user' => [
-                                    'account_id' => $result[1],
-                                    'email' => $email
-                                ],
-                                'message' => 'Login successful.',
-                            ], 200);
-                        }
-                        else {
-                            return response()->json(['error' => 'Failed to add token.'], 500);
-                        }
-            */
+
+            // Store the token in the database
+            DB::select('CALL Insert_Token(?, ?, @message)', [$account_id, $token]);
+            $insertTokenResult = DB::select('SELECT @message AS message')[0];
+            $insertTokenMessage = $insertTokenResult->message;
+            if ($insertTokenMessage == 'Token inserted successfully.') {
+                return $this->respond([
+                    'token' => $token,
+                    'user' => [
+                        'account_id' => $account_id,
+                        'email' => $email
+                    ],
+                    'message' => 'Login successful.',
+                ], $request, 200);
+            } else {
+                return $this->respond(['error' => 'Failed to add token.'], $request, 500);
+            }
+
         } catch (\Exception $e) {
             \Log::error('Login Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error.'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -92,13 +93,11 @@ class AccountController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'email' => 'required|string|email|max:255|unique:Account,email',
-                'password' => 'required|string|min:8',
-                'subscription_id' => 'required|integer|exists:Subscription,subscription_id',
-            ]);
+                'email' => 'required|string|email|max:255',
+                'password' => 'required|string|min:8',]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return $this->respond(['errors' => $validator->errors()], $request, 422);
             }
 
             // Hash the password
@@ -113,17 +112,17 @@ class AccountController extends Controller
             $message = $result->message;
 
             if ($message == 'User registered successfully.') {
-                return response()->json([
+                return $this->respond([
                     'message' => 'User registered successfully.',
-                ], 201);
+                ], $request, 201);
             } elseif ($message == 'Email already exists.') {
-                return response()->json([
+                return $this->respond([
                     'message' => 'Email already exists.',
-                ], 401);
+                ], $request, 401);
             }
         } catch (\Exception $e) {
             \Log::error('Register Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -138,27 +137,27 @@ class AccountController extends Controller
 
             // If no token is provided, return a 400 response
             if (!$token) {
-                return response()->json(['error' => 'No token provided.'], 400);
+                return $this->respond(['error' => 'No token provided.'], $request, 400);
             }
 
             // Check if the token exists in the database
             $tokenExists = DB::select('SELECT * FROM Get_Token WHERE token = ?', [$token]);
 
             if (!$tokenExists) {
-                return response()->json(['error' => 'Token not found or invalid'], 401);
+                return $this->respond(['error' => 'Token not found or invalid'], $request, 401);
             }
 
             // Delete the token from the database
             $deleted = DB::select('CALL Delete_Token(?)', [$token]);
 
             if ($deleted[0] == 'Token deleted successfully.') {
-                return response()->json(['message' => 'Logged out successfully'], 200);
+                return $this->respond(['message' => 'Logged out successfully'], $request, 200);
             } else {
-                return response()->json(['error' => 'Failed to log out'], 500);
+                return $this->respond(['error' => 'Failed to log out'], $request, 500);
             }
         } catch (\Exception $e) {
             \Log::error('Logout Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -175,7 +174,7 @@ class AccountController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return $this->respond(['errors' => $validator->errors()], $request, 422);
             }
 
             $password = $request->input('password');
@@ -188,14 +187,14 @@ class AccountController extends Controller
             $message = $result->result_message;
 
             if ($message == 'Password updated successfully.') {
-                return response()->json(['message' => $message], 200);
+                return $this->respond(['message' => $message], $request, 200);
             } else {
-                return response()->json(['error' => $message], 404);
+                return $this->respond(['error' => $message], $request, 404);
             }
 
         } catch (\Exception $e) {
             \Log::error('Reset Password Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -204,7 +203,6 @@ class AccountController extends Controller
      */
     public function blockAccount(Request $request)
     {
-
         try {
             $email = $request->input('email');
             DB::select('CALL Block_User(?, @message)', [$email]);
@@ -213,21 +211,21 @@ class AccountController extends Controller
             $message = $result->message;
 
             if ($message == 'User successfully blocked.') {
-                return response()->json(['message' => $message], 200);
+                return $this->respond(['message' => $message], $request, 200);
             } elseif ($message == 'User not found.') {
-                return response()->json(['error' => $message], 404);
+                return $this->respond(['error' => $message], $request, 404);
             }
 
         } catch (\Exception $e) {
             \Log::error('Block Account Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
     /**
      * Delete a profile by its ID.
      */
-    public function deleteProfile($id)
+    public function deleteProfile($id, Request $request)
     {
         try {
             DB::select('CALL Remove_Profile(?, @message)', [$id]);
@@ -237,12 +235,12 @@ class AccountController extends Controller
             $message = $result->message;
 
             if ($message == 'Profile removed successfully.') {
-                return response()->json(['message' => $message], 200);
+                return $this->respond(['message' => $message], $request, 200);
             } else {
-                return response()->json(['message' => $message], 404);
+                return $this->respond(['message' => $message], $request, 404);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -274,12 +272,12 @@ class AccountController extends Controller
             $message = $result->result_message;
 
             if ($message == 'Profile added successfully.') {
-                return response()->json(['message' => 'Profile added successfully.'], 201);
+                return $this->respond(['message' => 'Profile added successfully.'], $request, 201);
             } else {
-                return response()->json(['message' => $message], 404);
+                return $this->respond(['message' => $message], $request, 404);
             }
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
