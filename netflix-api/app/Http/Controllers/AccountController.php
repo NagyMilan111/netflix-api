@@ -205,8 +205,8 @@ class AccountController extends Controller
     public function blockAccount(Request $request)
     {
 
-        $email = $request->input('email');
         try {
+            $email = $request->input('email');
             DB::select('CALL Block_User(?, @message)', [$email]);
 
             $result = DB::select('SELECT @message AS message')[0];
@@ -227,20 +227,22 @@ class AccountController extends Controller
     /**
      * Delete a profile by its ID.
      */
-    public function deleteProfile(Request $request)
+    public function deleteProfile($id)
     {
-        $profile_id = $request->input('profile_id');
+        try {
+            DB::select('CALL Remove_Profile(?, @message)', [$id]);
 
-        DB::select('CALL Remove_Profile(?, @message)', [$profile_id]);
+            $result = DB::select('SELECT @message AS message')[0];
 
-        $result = DB::select('SELECT @message AS message')[0];
+            $message = $result->message;
 
-        $message = $result->message;
-
-        if ($message == 'Profile removed successfully.') {
-            return response()->json(['message' => $message], 200);
-        } else {
-            return response()->json(['message' => $message], 404);
+            if ($message == 'Profile removed successfully.') {
+                return response()->json(['message' => $message], 200);
+            } else {
+                return response()->json(['message' => $message], 404);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }
 
@@ -249,31 +251,35 @@ class AccountController extends Controller
      */
     public function addProfile(Request $request)
     {
-        // Validate the request
-        $validatedData = $request->validate([
-            'account_id' => 'required|integer',
-            'profile_name' => 'required|string|max:255',
-            'profile_age' => 'required|integer|min:1',
-            'profile_lang' => 'required|integer',
-        ]);
+        try {
+            // Validate the request
+            $validatedData = $request->validate([
+                'account_id' => 'required|integer',
+                'profile_name' => 'required|string|max:255',
+                'profile_age' => 'required|integer|min:1',
+                'profile_lang' => 'required|integer',
+            ]);
 
-        $account_id = $validatedData['account_id'];
-        $profile_name = $validatedData['profile_name'];
-        $profile_age = $validatedData['profile_age'];
-        $profile_lang = $validatedData['profile_lang'];
-        $profile_image = $request->input('profile_image');
-        $profile_movies_preferred = $request->input('profile_movies_preferred');
+            $account_id = $validatedData['account_id'];
+            $profile_name = $validatedData['profile_name'];
+            $profile_age = $validatedData['profile_age'];
+            $profile_lang = $validatedData['profile_lang'];
+            $profile_image = $request->input('profile_image');
+            $profile_movies_preferred = $request->input('profile_movies_preferred');
 
-        DB::select('CALL Add_Profile(?, ?, ?, ?, ?, ?, @result_message)', [$account_id, $profile_name, $profile_image,
-            $profile_age, $profile_lang, $profile_movies_preferred]);
+            DB::select('CALL Add_Profile(?, ?, ?, ?, ?, ?, @result_message)', [$account_id, $profile_name, $profile_image,
+                $profile_age, $profile_lang, $profile_movies_preferred]);
 
-        $result = DB::select('SELECT @result_message AS result_message')[0];
-        $message = $result->result_message;
+            $result = DB::select('SELECT @result_message AS result_message')[0];
+            $message = $result->result_message;
 
-        if ($message == 'Profile added successfully.') {
-            return response()->json(['message' => 'Profile added successfully.'], 201);
-        } else {
-            return response()->json(['message' => $message], 404);
+            if ($message == 'Profile added successfully.') {
+                return response()->json(['message' => 'Profile added successfully.'], 201);
+            } else {
+                return response()->json(['message' => $message], 404);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Internal Server Error'], 500);
         }
     }
 

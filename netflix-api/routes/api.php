@@ -21,7 +21,7 @@ Route::prefix('account')->group(function () {
     Route::post('/register', [AccountController::class, 'register']);
     Route::post('/reset-password', [AccountController::class, 'resetPassword']);
     Route::post('/logout', [AccountController::class, 'logout']);
-    Route::post('/block/{id}', [AccountController::class, 'blockAccount'])->whereNumber('id');
+    Route::post('/block/{id}', [AccountController::class, 'blockAccount']);
     Route::delete('/{id}', [AccountController::class, 'deleteProfile'])->whereNumber('id');
     Route::post('/', [AccountController::class, 'addProfile']);
 
@@ -43,13 +43,13 @@ Route::prefix('profile')->group(function () {
 
 // Subscription Routes
 Route::prefix('subscription')->group(function () {
-    Route::get('/details/{userId}', [SubscriptionController::class, 'getSubscriptionDetails']);
+    Route::get('/details/{id}}', [SubscriptionController::class, 'getSubscriptionDetails'])->whereNumber('id');
     Route::put('/update', [SubscriptionController::class, 'updateSubscription']);
 });
 
 // Token Routes
 Route::prefix('token')->group(function () {
-    Route::post('/generate/{userId}', [TokenController::class, 'generateToken'])->whereNumber('userId');
+    Route::post('/generate/{id}', [TokenController::class, 'generateToken'])->whereNumber('id');
     Route::put('/refresh', [TokenController::class, 'refreshToken']);
     Route::delete('/revoke', [TokenController::class, 'revokeToken']);
     Route::get('/validate', [TokenController::class, 'validateToken']);
@@ -61,12 +61,12 @@ Route::prefix('external')->group(function () {
 });
 
 // Episode Routes
-Route::prefix('episodes')->group(function () {
-    Route::get('/', [EpisodeController::class, 'index']); // List all episodes
-    Route::get('/{id}', [EpisodeController::class, 'show'])->whereNumber('id'); // Show a specific episode
-    Route::post('/', [EpisodeController::class, 'store']); // Create a new episode
-    Route::put('/{id}', [EpisodeController::class, 'update'])->whereNumber('id'); // Update an episode
-    Route::delete('/{id}', [EpisodeController::class, 'destroy'])->whereNumber('id'); // Delete an episode
+Route::prefix('episode')->group(function () {
+    Route::get('/', [EpisodeController::class, 'getAllEpisodes']); // List all episodes
+    Route::get('/{id}', [EpisodeController::class, 'getEpisodeById'])->whereNumber('id'); // Show a specific episode
+    Route::post('/', [EpisodeController::class, 'addNewEpisode']); // Create a new episode
+    Route::put('/{id}', [EpisodeController::class, 'updateEpisode'])->whereNumber('id'); // Update an episode
+    Route::delete('/{id}', [EpisodeController::class, 'deleteEpisode'])->whereNumber('id'); // Delete an episode
 });
 
 //Series routes

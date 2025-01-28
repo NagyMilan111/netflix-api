@@ -12,7 +12,6 @@ class SeriesController extends Controller
     public function listAllSeries()
     {
         try {
-
             $series = DB::select('SELECT * FROM List_Series');
             return response()->json(['values' => $series]);
         } catch (\Exception $e) {

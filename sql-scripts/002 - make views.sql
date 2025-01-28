@@ -295,3 +295,14 @@ SELECT
 FROM
     Series;
 
+CREATE VIEW List_Episodes AS
+SELECT
+    media_id,
+    title,
+    duration,
+    series_id,
+    season,
+    genre_id
+FROM
+    Media
+WHERE series_id IS NOT NULL AND season IS NOT NULL;

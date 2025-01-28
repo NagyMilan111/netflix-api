@@ -4,74 +4,118 @@ namespace App\Http\Controllers;
 
 use App\Models\Episode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class EpisodeController extends Controller
 {
     // List all episodes
-    public function index()
+    public function getAllEpisodes()
     {
-        $episodes = Episode::all();
-        return response()->json($episodes);
+        try {
+            $result = DB::select('SELECT * FROM List_Episodes');
+
+            if ($result == null) {
+                return response()->json(['error' => 'No episodes found.'], 404);
+            } else {
+                return response()->json(['values' => $result], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
+        }
     }
 
     // Show a specific episode
-    public function show($id)
+    public function getEpisodeById($id)
     {
-        $episode = Episode::find($id);
-
-        if (!$episode) {
-            return response()->json(['message' => 'Episode not found'], 404);
+        try {
+            $result = DB::select('SELECT * FROM List_Episodes WHERE media_id = ?', [$id]);
+            if ($result == null) {
+                return response()->json(['error' => 'No episode found with that id.'], 404);
+            } else {
+                return response()->json(['values' => $result], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
         }
-
-        return response()->json($episode);
     }
 
     // Create a new episode
-    public function store(Request $request)
+    //TODO: Fix the procedure so that it will exit if an episode is not found
+    public function addNewEpisode(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'release_date' => 'required|date',
-            'duration' => 'nullable',
-            'series_id' => 'required|exists:series,id',
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'season' => 'required|integer',
+            ]);
+            $title = $request->input('title');
+            $duration = $request->input('duration');
+            $season = $request->input('season');
+            $series_id = $request->input('series_id');
+            $genre_id = $request->input('genre_id');
 
-        $episode = Episode::create($request->all());
-        return response()->json($episode, 201);
+            DB::select('CALL Insert_Episode(?, ?, ?, ?, ?, @message)', [$title, $duration, $series_id, $season, $genre_id]);
+
+            $result = DB::select('SELECT @message as message')[0];
+
+            $message = $result->message;
+
+            if ($message == 'Episode inserted successfully.') {
+                return response()->json(['message' => $message], 201);
+            } else {
+                return response()->json(['error' => $message], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
+        }
     }
 
     // Update an existing episode
-    public function update(Request $request, $id)
+    public function updateEpisode(Request $request, $id)
     {
-        $episode = Episode::find($id);
+        try {
+            $title = $request->input('title');
+            $duration = $request->input('duration');
+            $season = $request->input('season');
+            $series_id = $request->input('series_id');
+            $genre_id = $request->input('genre_id');
 
-        if (!$episode) {
-            return response()->json(['message' => 'Episode not found'], 404);
+            DB::select('CALL Update_Episode(?, ?, ?, ?, ?, ?, @message)', [$id, $title, $duration, $series_id, $season, $genre_id]);
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Episode not found.') {
+                return response()->json(['error' => 'Episode not found.'], 404);
+            } elseif ($message == 'Failed to update episode.') {
+                return response()->json(['error' => 'Failed to update episode.'], 500);
+            } else {
+                return response()->json(['message' => $message], 200);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
         }
-
-        $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'release_date' => 'sometimes|required|date',
-            'duration' => 'nullable',
-            'series_id' => 'sometimes|required|exists:series,id',
-        ]);
-
-        $episode->update($request->all());
-        return response()->json($episode);
     }
 
     // Delete an episode
-    public function destroy($id)
+    public function deleteEpisode($id)
     {
-        $episode = Episode::find($id);
+        try {
+            DB::select('CALL Delete_Episode(?, @message)', [$id]);
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
 
-        if (!$episode) {
-            return response()->json(['message' => 'Episode not found'], 404);
+            if ($message == 'Episode not found.') {
+                return response()->json(['error' => 'Episode not found.'], 404);
+            } elseif ($message == 'Failed to delete episode.') {
+                return response()->json(['error' => 'Failed to delete episode.'], 500);
+            } else {
+                return response()->json(['message' => $message], 200);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e], 500);
         }
-
-        $episode->delete();
-        return response()->json(['message' => 'Episode deleted successfully']);
     }
 }

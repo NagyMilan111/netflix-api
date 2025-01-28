@@ -983,3 +983,111 @@ END //
 
 DELIMITER ;
 
+DELIMITER //
+
+CREATE PROCEDURE Insert_Episode(
+    IN input_title VARCHAR(255),
+    IN input_duration TIME,
+    IN input_series_id INT,
+    IN input_season INT,
+    IN input_genre_id INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE rows_affected INT;
+
+    INSERT INTO Media (title, duration, series_id, season, genre_id)
+    VALUES (input_title, input_duration, input_series_id, input_season, input_genre_id);
+
+    -- Check if the row was successfully inserted
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Episode inserted successfully.';
+    ELSE
+        SET result_message = 'Failed to insert episode.';
+    END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Update_Episode(
+    IN input_id INT,
+    IN input_title VARCHAR(255),
+    IN input_duration TIME,
+    IN input_series_id INT,
+    IN input_season INT,
+    IN input_genre_id INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE episode_exists INT;
+    DECLARE rows_affected INT;
+
+    -- Check if the episode exists in the Media table
+    SELECT COUNT(*) INTO episode_exists
+    FROM Media
+    WHERE media_id = input_id;
+
+    IF episode_exists = 0 THEN
+        SET result_message = 'Episode not found.';
+    END IF;
+
+    -- Update the episode in the Media table
+    UPDATE Media
+    SET
+        title = input_title,
+        duration = input_duration,
+        series_id = input_series_id,
+        season = input_season,
+        genre_id = input_genre_id
+    WHERE media_id = input_id;
+
+    -- Check if any row was updated
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Episode updated successfully.';
+    ELSE
+        SET result_message = 'Failed to update episode.';
+    END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Delete_Episode(
+    IN input_id INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE episode_exists INT;
+    DECLARE rows_affected INT;
+
+    -- Check if the episode exists in the Media table
+    SELECT COUNT(*) INTO episode_exists
+    FROM Media
+    WHERE media_id = input_id;
+
+    IF episode_exists = 0 THEN
+        SET result_message = 'Episode not found.';
+    END IF;
+
+    -- Delete the episode from the Media table
+    DELETE FROM Media
+    WHERE media_id = input_id;
+
+    -- Check if any row was deleted
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Episode deleted successfully.';
+    ELSE
+        SET result_message = 'Failed to delete episode.';
+    END IF;
+END //
+
+DELIMITER ;

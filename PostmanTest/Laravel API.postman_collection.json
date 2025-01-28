@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "bf54b3c6-5e7a-472f-9812-37ed57733f3d",
+		"_postman_id": "51045283-172e-4fde-b635-6b2021a6978c",
 		"name": "Laravel API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "40904394"
+		"_exporter_id": "41171121"
 	},
 	"item": [
 		{
@@ -59,7 +59,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"email\": \"user1@example.com\",\r\n  \"password\": \"examplePassword1\"\r\n}\r\n",
+							"raw": "{\r\n  \"email\": \"newuser@example.com\",\r\n  \"password\": \"newPassword123\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -150,8 +150,17 @@
 					"request": {
 						"method": "POST",
 						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\":\"newuser@example.com\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "http://127.0.0.1:8000/api/account/block/5",
+							"raw": "http://127.0.0.1:8000/api/account/block/2",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -164,7 +173,79 @@
 								"api",
 								"account",
 								"block",
-								"5"
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AddProfile",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"account_id\": 1,\r\n    \"profile_name\": \"my profile\",\r\n    \"profile_image\": \"placeholder\",\r\n    \"profile_age\": 20,\r\n    \"profile_lang\": 1,\r\n    \"profile_movies_preferred\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/account/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"account",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RemoveProfile",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"profile_id\": 5\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/account/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"account",
+								""
 							]
 						}
 					},
@@ -195,7 +276,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"profile_id\": 1\r\n}\r\n",
+							"raw": "{\r\n    \"profile_id\": 4\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -229,7 +310,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"profile_id\": 1,\r\n    \"pause_spot\": \"00:45:00\"\r\n}\r\n",
+							"raw": "{\r\n    \"profile_id\": 4,\r\n    \"pause_spot\": \"1000\"\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -263,7 +344,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"profile_id\": 1\r\n}\r\n",
+							"raw": "{\r\n    \"profile_id\": 4\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -296,55 +377,13 @@
 			"name": "ProfileController",
 			"item": [
 				{
-					"name": "AddProfile",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "d71ede225c2e0a7a944a576b68bfc140937dd7fe640a8ac178c7b25791a431ec00c5c5ac1e62f54f",
-									"type": "string"
-								}
-							]
-						},
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"account_id\": 1,\r\n    \"profile_name\": \"JonnyYow\",\r\n    \"profile_age\": 29,\r\n    \"profile_lang\": 1\r\n}\r\n",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "http://127.0.0.1:8000/api/profile",
-							"protocol": "http",
-							"host": [
-								"127",
-								"0",
-								"0",
-								"1"
-							],
-							"port": "8000",
-							"path": [
-								"api",
-								"profile"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Preferences",
 					"request": {
 						"method": "PUT",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"profile_id\": 1,\r\n    \"profile_movies_preferred\": true\r\n}\r\n",
+							"raw": "{\r\n    \"profile_id\": 4,\r\n    \"movies_preferred\": false\r\n}\r\n",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -371,12 +410,15 @@
 					"response": []
 				},
 				{
-					"name": "Delete",
+					"name": "GetToWatchList",
 					"request": {
-						"method": "DELETE",
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://127.0.0.1:8000/api/profile/4",
+							"raw": "http://127.0.0.1:8000/api/profile/4/toWatch",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -388,7 +430,82 @@
 							"path": [
 								"api",
 								"profile",
-								"4"
+								"4",
+								"toWatch"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "updateWatchList",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"action\": \"add\",\r\n    \"media_id\": 2,\r\n    \"series_id\": null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/profile/4/updateWatchList",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"profile",
+								"4",
+								"updateWatchList"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deleteFromWatchList",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"action\": \"remove\",\r\n    \"media_id\": 2,\r\n    \"series_id\": null\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/profile/4/updateWatchList",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"profile",
+								"4",
+								"updateWatchList"
 							]
 						}
 					},
@@ -407,15 +524,6 @@
 						},
 						"method": "POST",
 						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
 						"url": {
 							"raw": "http://127.0.0.1:8000/api/token/generate/1",
 							"protocol": "http",
@@ -440,7 +548,10 @@
 					"name": "New Request",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": ""
+						}
 					},
 					"response": []
 				},
@@ -555,15 +666,463 @@
 					"name": "Details",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/subscription/details/1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"subscription",
+								"details",
+								"1"
+							]
+						}
 					},
 					"response": []
 				},
 				{
 					"name": "Update",
 					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"account_id\": 1,\r\n    \"subscription_id\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/subscription/update",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"subscription",
+								"update"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "SeriesController",
+			"item": [
+				{
+					"name": "listAllSeries",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/series/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"series",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getSeriesById",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/series/2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"series",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "createNewSeries",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"Squidgame\",\r\n    \"genre_id\": \"1\",\r\n    \"number_of_seasons\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/series/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"series",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "updateSeries",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"updatedSeriesName\",\r\n    \"genre_id\": 1,\r\n    \"number_of_seasons\": 51\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/series/2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"series",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deleteSeries",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/series/2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"series",
+								"2"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "AnalyticsController",
+			"item": [
+				{
+					"name": "getTopTenWatchedMovies",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/analytics/top-ten/watched/movies",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"analytics",
+								"top-ten",
+								"watched",
+								"movies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getBottomTenGenres",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/analytics/bottom-ten-watched/genres",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"analytics",
+								"bottom-ten-watched",
+								"genres"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getTotalRevenue",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/analytics/revenue",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"analytics",
+								"revenue"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getSortAllByViewsMovies",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/analytics/sort-all-by-views/movies",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"analytics",
+								"sort-all-by-views",
+								"movies"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "EpisodeController",
+			"item": [
+				{
+					"name": "getAllEpisodes",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/episode/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"episode",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getEpisodeById",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/episode/3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"episode",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "addNewEpisode",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"newEpisode\",\r\n    \"duration\": 5455,\r\n    \"season\": 1,\r\n    \"series_id\": 1,\r\n    \"genre_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/episode/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"episode",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "updateEpisode",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"title\": \"updatedEpisode\",\r\n    \"duration\": 5455,\r\n    \"season\": 1,\r\n    \"series_id\": 1,\r\n    \"genre_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/episode/3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"episode",
+								"3"
+							]
+						}
 					},
 					"response": []
 				}
