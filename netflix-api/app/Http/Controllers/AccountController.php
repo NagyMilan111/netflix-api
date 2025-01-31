@@ -29,55 +29,45 @@ class AccountController extends Controller
             }
             $email = $request->input('email');
             $password = $request->input('password');
-            $password = Crypt::encrypt($password);
 
-            // Call the stored procedure
-            DB::select('CALL User_Login(?, ?, @message, @account_id)', [$email, $password]);
+            DB::select('CALL User_Login(?, @message, @account_id, @hashed_password)', [$email]);
 
-            // Retrieve both OUT parameters in a single query
-            $outParams = DB::select('SELECT @message AS message, @account_id AS account_id')[0];
+            $outParams = DB::select('SELECT @message AS message, @account_id AS account_id, @hashed_password AS hashed_password')[0];
 
-            // Access the OUT parameters
             $message = $outParams->message;
             $account_id = $outParams->account_id;
+            $hashed_password = $outParams->hashed_password;
 
-
-            //TODO: Fix the login sequence, something is wrong in the procedure for this, it is not returning the account_id
-
-            // Use $userId as needed
-            if ($message == 'User login successful.') {
-                return $this->respond(['message' => $message, 'account_id' => $account_id], $request, 200);
-            }
             if ($message == 'User not found.') {
                 return $this->respond(['error' => $message], $request, 404);
-            }
-
-            // Verify the password
-            if ($message == 'Incorrect password.') {
+            } else if ($message == 'User is blocked.') {
                 return $this->respond(['error' => $message], $request, 401);
-            }
+            } else if ($message == 'Authentication required.') {
+                if (!Hash::check($password, $hashed_password)) {
+                    return $this->respond(['error' => 'Incorrect password.'], $request, 401);
+                } else {
 
-            if ($message == 'User is blocked.') {
-                return $this->respond(['error' => $message], $request, 401);
-            }
-            // Generate a token
-            $token = bin2hex(random_bytes(40));
+                    // Generate a token
+                    $token = bin2hex(random_bytes(40));
 
-            // Store the token in the database
-            DB::select('CALL Insert_Token(?, ?, @message)', [$account_id, $token]);
-            $insertTokenResult = DB::select('SELECT @message AS message')[0];
-            $insertTokenMessage = $insertTokenResult->message;
-            if ($insertTokenMessage == 'Token inserted successfully.') {
-                return $this->respond([
-                    'token' => $token,
-                    'user' => [
-                        'account_id' => $account_id,
-                        'email' => $email
-                    ],
-                    'message' => 'Login successful.',
-                ], $request, 200);
-            } else {
-                return $this->respond(['error' => 'Failed to add token.'], $request, 500);
+                    // Store the token in the database
+                    DB::select('CALL Insert_Token(?, ?, @message)', [$account_id, $token]);
+                    $insertTokenResult = DB::select('SELECT @message AS message')[0];
+                    $insertTokenMessage = $insertTokenResult->message;
+                    if ($insertTokenMessage == 'Token inserted successfully.') {
+                        return $this->respond([
+                            'token' => $token,
+                            'user' => [
+                                'account_id' => $account_id,
+                                'email' => $email
+                            ],
+                            'message' => 'Login successful.',
+                        ], $request, 200);
+                    } else {
+                        return $this->respond(['error' => 'Failed to add token.'], $request, 500);
+                    }
+                }
+
             }
 
         } catch (\Exception $e) {
@@ -180,7 +170,7 @@ class AccountController extends Controller
             $password = $request->input('password');
             $email = $request->input('email');
 
-            $password = Crypt::encrypt($password);
+            $password = Hash::make($password);
             //Make this work with tokens somehow
             DB::select('CALL Update_Password(?, ?, @result_message)', [$email, $password]);
             $result = DB::select('SELECT @result_message AS result_message')[0];

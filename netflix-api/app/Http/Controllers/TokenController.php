@@ -43,7 +43,6 @@ class TokenController extends Controller
     /**
      * Refresh a user's token.
      */
-    //TODO: Find out how to put tokens in the headers in postman requests to test this correctly
     public function refreshToken(Request $request)
     {
         try {

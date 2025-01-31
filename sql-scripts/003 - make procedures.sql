@@ -1,6 +1,6 @@
 DELIMITER //
 
-CREATE PROCEDURE Add_Media (
+CREATE PROCEDURE Add_Media(
     IN p_title VARCHAR(255),
     IN p_duration TIME,
     IN p_series_id INT,
@@ -13,7 +13,8 @@ BEGIN
     DECLARE genre_exists INT;
 
     IF p_series_id IS NOT NULL THEN
-        SELECT COUNT(*) INTO series_exists
+        SELECT COUNT(*)
+        INTO series_exists
         FROM Series
         WHERE series_id = p_series_id;
 
@@ -24,7 +25,8 @@ BEGIN
     END IF;
 
     IF p_genre_id IS NOT NULL THEN
-        SELECT COUNT(*) INTO genre_exists
+        SELECT COUNT(*)
+        INTO genre_exists
         FROM Genre
         WHERE genre_id = p_genre_id;
 
@@ -42,7 +44,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Add_Profile (
+CREATE PROCEDURE Add_Profile(
     IN p_account_id INT,
     IN p_profile_name VARCHAR(255),
     IN p_profile_image VARCHAR(255),
@@ -54,7 +56,8 @@ CREATE PROCEDURE Add_Profile (
 BEGIN
     DECLARE account_exists INT;
 
-    SELECT COUNT(*) INTO account_exists
+    SELECT COUNT(*)
+    INTO account_exists
     FROM Account
     WHERE account_id = p_account_id;
 
@@ -62,22 +65,18 @@ BEGIN
         SET result_message = 'Account not found.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        INSERT INTO Profile (
-            account_id,
-            profile_name,
-            profile_image,
-            profile_age,
-            profile_lang,
-            profile_movies_preferred
-        )
-        VALUES (
-            p_account_id,
-            p_profile_name,
-            p_profile_image,
-            p_profile_age,
-            p_profile_lang,
-            p_profile_movies_preferred
-        );
+        INSERT INTO Profile (account_id,
+                             profile_name,
+                             profile_image,
+                             profile_age,
+                             profile_lang,
+                             profile_movies_preferred)
+        VALUES (p_account_id,
+                p_profile_name,
+                p_profile_image,
+                p_profile_age,
+                p_profile_lang,
+                p_profile_movies_preferred);
 
         SET result_message = 'Profile added successfully.';
     END IF;
@@ -85,7 +84,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Add_Watchlist (
+CREATE PROCEDURE Add_Watchlist(
     IN p_profile_id INT,
     IN media_id INT,
     IN series_id INT,
@@ -94,9 +93,12 @@ CREATE PROCEDURE Add_Watchlist (
 BEGIN
     DECLARE watchlist_exists INT;
 
-    SELECT COUNT(*) INTO watchlist_exists
+    SELECT COUNT(*)
+    INTO watchlist_exists
     FROM Profile_Watch_List
-    WHERE profile_id = p_profile_id AND media_id = media_id AND series_id = series_id;
+    WHERE profile_id = p_profile_id
+      AND media_id = media_id
+      AND series_id = series_id;
 
     IF watchlist_exists > 0 THEN
         SET result_message = 'Watchlist already exists for this profile.';
@@ -110,7 +112,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Apply_Discount (
+CREATE PROCEDURE Apply_Discount(
     IN inviter_account_id INT,
     IN invitee_account_id INT,
     OUT result_message VARCHAR(255)
@@ -120,15 +122,18 @@ BEGIN
     DECLARE invitee_exists INT;
     DECLARE invitee_already_invited INT;
 
-    SELECT COUNT(*) INTO inviter_exists
+    SELECT COUNT(*)
+    INTO inviter_exists
     FROM Account
     WHERE account_id = inviter_account_id;
 
-    SELECT COUNT(*) INTO invitee_exists
+    SELECT COUNT(*)
+    INTO invitee_exists
     FROM Account
     WHERE account_id = invitee_account_id;
 
-    SELECT COUNT(*) INTO invitee_already_invited
+    SELECT COUNT(*)
+    INTO invitee_already_invited
     FROM Discounted_Users
     WHERE invited_account_id = invitee_account_id;
 
@@ -159,14 +164,15 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Block_User (
+CREATE PROCEDURE Block_User(
     IN user_email VARCHAR(255),
     OUT result_message VARCHAR(255)
 )
 BEGIN
     DECLARE user_exists INT;
 
-    SELECT COUNT(*) INTO user_exists
+    SELECT COUNT(*)
+    INTO user_exists
     FROM Account
     WHERE email = user_email;
 
@@ -184,14 +190,15 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_Media (
+CREATE PROCEDURE Remove_Media(
     IN p_media_id INT,
     OUT result_message VARCHAR(255)
 )
 BEGIN
     DECLARE media_exists INT;
 
-    SELECT COUNT(*) INTO media_exists
+    SELECT COUNT(*)
+    INTO media_exists
     FROM Media
     WHERE media_id = p_media_id;
 
@@ -199,7 +206,8 @@ BEGIN
         SET result_message = 'Media not found.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        DELETE FROM Media
+        DELETE
+        FROM Media
         WHERE media_id = p_media_id;
 
         SET result_message = 'Media removed successfully.';
@@ -208,14 +216,15 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_Profile (
+CREATE PROCEDURE Remove_Profile(
     IN p_profile_id INT,
     OUT result_message VARCHAR(255)
 )
 BEGIN
     DECLARE profile_exists INT;
 
-    SELECT COUNT(*) INTO profile_exists
+    SELECT COUNT(*)
+    INTO profile_exists
     FROM Profile
     WHERE profile_id = p_profile_id;
 
@@ -223,7 +232,8 @@ BEGIN
         SET result_message = 'Profile not found.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        DELETE FROM Profile
+        DELETE
+        FROM Profile
         WHERE profile_id = p_profile_id;
 
         SET result_message = 'Profile removed successfully.';
@@ -232,14 +242,15 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_User (
+CREATE PROCEDURE Remove_User(
     IN user_account_id INT,
     OUT result_message VARCHAR(255)
 )
 BEGIN
     DECLARE account_exists INT;
 
-    SELECT COUNT(*) INTO account_exists
+    SELECT COUNT(*)
+    INTO account_exists
     FROM Account
     WHERE account_id = user_account_id;
 
@@ -247,10 +258,13 @@ BEGIN
         SET result_message = 'Account not found.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        DELETE FROM Discounted_Users
-        WHERE account_id = user_account_id OR invited_account_id = user_account_id;
+        DELETE
+        FROM Discounted_Users
+        WHERE account_id = user_account_id
+           OR invited_account_id = user_account_id;
 
-        DELETE FROM Account
+        DELETE
+        FROM Account
         WHERE account_id = user_account_id;
 
         SET result_message = 'Account removed successfully.';
@@ -259,7 +273,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_Watchlist (
+CREATE PROCEDURE Remove_Watchlist(
     IN p_profile_id INT,
     IN p_media_id INT,
     IN p_series_id INT,
@@ -268,16 +282,22 @@ CREATE PROCEDURE Remove_Watchlist (
 BEGIN
     DECLARE watchlist_exists INT;
 
-    SELECT COUNT(*) INTO watchlist_exists
+    SELECT COUNT(*)
+    INTO watchlist_exists
     FROM Profile_Watch_List
-    WHERE profile_id = p_profile_id AND media_id = p_media_id AND series_id = p_series_id;
+    WHERE profile_id = p_profile_id
+      AND media_id = p_media_id
+      AND series_id = p_series_id;
 
     IF watchlist_exists = 0 THEN
         SET result_message = 'No watchlist exists for this profile.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        DELETE FROM Profile_Watch_List
-        WHERE profile_id = p_profile_id AND media_id = p_media_id AND series_id = p_series_id;
+        DELETE
+        FROM Profile_Watch_List
+        WHERE profile_id = p_profile_id
+          AND media_id = p_media_id
+          AND series_id = p_series_id;
 
         SET result_message = 'Removed from watchlist successfully.';
     END IF;
@@ -285,7 +305,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Currently_Watched (
+CREATE PROCEDURE Update_Currently_Watched(
     IN p_profile_id INT,
     IN p_media_id INT,
     IN p_subtitle_id INT,
@@ -297,11 +317,13 @@ BEGIN
     DECLARE profile_exists INT;
     DECLARE media_exists INT;
 
-    SELECT COUNT(*) INTO profile_exists
+    SELECT COUNT(*)
+    INTO profile_exists
     FROM Profile
     WHERE profile_id = p_profile_id;
 
-    SELECT COUNT(*) INTO media_exists
+    SELECT COUNT(*)
+    INTO media_exists
     FROM Media
     WHERE media_id = p_media_id;
 
@@ -312,13 +334,13 @@ BEGIN
         SET result_message = 'Media does not exist.';
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        INSERT INTO Profile_Watched_Media (profile_id, media_id, subtitle_id, pause_spot, times_watched, last_watch_date)
+        INSERT INTO Profile_Watched_Media (profile_id, media_id, subtitle_id, pause_spot, times_watched,
+                                           last_watch_date)
         VALUES (p_profile_id, p_media_id, p_subtitle_id, p_pause_spot, 1, p_last_watch_date)
-        ON DUPLICATE KEY UPDATE 
-            subtitle_id = p_subtitle_id,
-            pause_spot = p_pause_spot,
-            times_watched = times_watched + 1,
-            last_watch_date = p_last_watch_date;
+        ON DUPLICATE KEY UPDATE subtitle_id     = p_subtitle_id,
+                                pause_spot      = p_pause_spot,
+                                times_watched   = times_watched + 1,
+                                last_watch_date = p_last_watch_date;
 
         SET result_message = 'Currently watched media updated successfully.';
     END IF;
@@ -326,7 +348,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Profile_Genre (
+CREATE PROCEDURE Update_Profile_Genre(
     IN p_profile_id INT,
     IN p_genre_id INT,
     OUT result_message VARCHAR(255)
@@ -335,11 +357,13 @@ BEGIN
     DECLARE profile_exists INT;
     DECLARE genre_exists INT;
 
-    SELECT COUNT(*) INTO profile_exists
+    SELECT COUNT(*)
+    INTO profile_exists
     FROM Profile
     WHERE profile_id = p_profile_id;
 
-    SELECT COUNT(*) INTO genre_exists
+    SELECT COUNT(*)
+    INTO genre_exists
     FROM Genre
     WHERE genre_id = p_genre_id;
 
@@ -352,8 +376,7 @@ BEGIN
     ELSE
         INSERT INTO Profile_Genre (profile_id, genre_id)
         VALUES (p_profile_id, p_genre_id)
-        ON DUPLICATE KEY UPDATE 
-            genre_id = p_genre_id;
+        ON DUPLICATE KEY UPDATE genre_id = p_genre_id;
 
         SET result_message = 'Profile genre updated successfully.';
     END IF;
@@ -361,40 +384,38 @@ END //
 
 DELIMITER //
 
-DELIMITER //
-
-CREATE PROCEDURE User_Login (
+CREATE PROCEDURE User_Login(
     IN user_email VARCHAR(255),
-    IN user_password VARCHAR(255),
     OUT result_message VARCHAR(255),
-    OUT account_id INT
+    OUT result_account_id INT,
+    OUT result_hashed_password VARCHAR(255)
 )
 BEGIN
-    DECLARE user_exists INT;
-    DECLARE hashed_password VARCHAR(255);
+    DECLARE user_exists INT DEFAULT 0;
+    DECLARE temp_hashed_password VARCHAR(255);
     DECLARE user_blocked INT;
     DECLARE temp_account_id INT;
 
+    -- Check if the user exists and retrieve the necessary details
     SELECT COUNT(*), account_id, hashed_password, blocked
-    INTO user_exists, temp_account_id, hashed_password, user_blocked
+    INTO user_exists, temp_account_id, temp_hashed_password, user_blocked
     FROM Account
     WHERE email = user_email;
 
+    -- If no user is found, set the result message and return
     IF user_exists = 0 THEN
         SET result_message = 'User not found.';
-        SET account_id = NULL;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
+        SET result_account_id = NULL;
+        SET result_hashed_password = NULL;
+        -- If the user is blocked, set the result message and return
     ELSEIF user_blocked = 1 THEN
         SET result_message = 'User is blocked.';
-        SET account_id = NULL;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
-    ELSEIF hashed_password != user_password THEN -- Replace with proper hashing check in practice
-        SET result_message = 'Incorrect password.';
-        SET account_id = NULL;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
+        SET result_account_id = NULL;
+        SET result_hashed_password = NULL;
     ELSE
-        SET result_message = 'User login successful.';
-        SET account_id = temp_account_id;
+        SET result_message = 'Authentication required.';
+        SET result_account_id = temp_account_id;
+        SET result_hashed_password = temp_hashed_password;
     END IF;
 END //
 
@@ -404,14 +425,15 @@ DELIMITER ;
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE Get_Media (
+CREATE PROCEDURE Get_Media(
     IN p_media_id INT,
     OUT result_message VARCHAR(255)
 )
 BEGIN
     DECLARE media_exists INT;
 
-    SELECT COUNT(*) INTO media_exists
+    SELECT COUNT(*)
+    INTO media_exists
     FROM Media
     WHERE media_id = p_media_id;
 
@@ -427,14 +449,15 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE Get_Profile (
+CREATE PROCEDURE Get_Profile(
     IN p_profile_id INT,
     OUT result_message VARCHAR(255)
 )
 BEGIN
     DECLARE profile_exists INT;
 
-    SELECT COUNT(*) INTO profile_exists
+    SELECT COUNT(*)
+    INTO profile_exists
     FROM Profile
     WHERE profile_id = p_profile_id;
 
@@ -449,36 +472,9 @@ BEGIN
 END //
 DELIMITER ;
 
-DELIMITER //
-
-CREATE PROCEDURE Get_Watch_List (
-    IN p_profile_id INT,
-    OUT result_message VARCHAR(255)
-)
-BEGIN
-    DECLARE watchlist_exists INT;
-
-    -- Check if the watchlist exists for the given profile
-    SELECT COUNT(*) INTO watchlist_exists
-    FROM Profile_Watch_List
-    WHERE profile_id = p_profile_id;
-
-    IF watchlist_exists = 0 THEN
-        SET result_message = 'No watchlist found for this profile.';
-    ELSE
-        -- Concatenate media_id and series_id into a single string for result_message
-        SELECT GROUP_CONCAT(CONCAT('Media ID: ', media_id, ', Series ID: ', series_id) SEPARATOR '; ')
-        INTO result_message
-        FROM Profile_Watch_List
-        WHERE profile_id = p_profile_id;
-    END IF;
-END //
-
-DELIMITER ;
-
 
 DELIMITER //
-CREATE PROCEDURE Register_User (
+CREATE PROCEDURE Register_User(
     IN user_email VARCHAR(255),
     IN user_password VARCHAR(255),
     IN p_subscription_id INT,
@@ -487,29 +483,26 @@ CREATE PROCEDURE Register_User (
 BEGIN
     DECLARE email_exists INT;
 
-    SELECT COUNT(*) INTO email_exists
+    SELECT COUNT(*)
+    INTO email_exists
     FROM Account
     WHERE email = user_email;
 
     IF email_exists > 0 THEN
         SET result_message = 'Email already exists.';
     ELSE
-        INSERT INTO Account (
-            email,
-            hashed_password,
-            subscription_id,
-            blocked,
-            discount_active,
-            billed_from
-        )
-        VALUES (
-            user_email,
-            user_password,
-            p_subscription_id,
-            0,
-            0,
-            DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-        );
+        INSERT INTO Account (email,
+                             hashed_password,
+                             subscription_id,
+                             blocked,
+                             discount_active,
+                             billed_from)
+        VALUES (user_email,
+                user_password,
+                p_subscription_id,
+                0,
+                0,
+                DATE_ADD(CURDATE(), INTERVAL 7 DAY));
 
         SET result_message = 'User registered successfully.';
     END IF;
@@ -517,7 +510,7 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE Update_Password (
+CREATE PROCEDURE Update_Password(
     IN user_email VARCHAR(255),
     IN new_password VARCHAR(255),
     OUT result_message VARCHAR(255)
@@ -525,7 +518,8 @@ CREATE PROCEDURE Update_Password (
 BEGIN
     DECLARE user_exists INT;
 
-    SELECT COUNT(*) INTO user_exists
+    SELECT COUNT(*)
+    INTO user_exists
     FROM Account
     WHERE email = user_email;
 
@@ -564,7 +558,8 @@ BEGIN
     -- Update the pause_spot for the given media
     UPDATE Profile_Watched_Media
     SET pause_spot = input_pause_spot
-    WHERE profile_id = input_profile_id AND media_id = input_media_id;
+    WHERE profile_id = input_profile_id
+      AND media_id = input_media_id;
 
     -- Check if any row was updated
     SET row_count = ROW_COUNT();
@@ -596,7 +591,8 @@ BEGIN
     DECLARE media_exists INT;
 
     -- Validate that the media exists
-    SELECT COUNT(*) INTO media_exists
+    SELECT COUNT(*)
+    INTO media_exists
     FROM Media
     WHERE media_id = input_media_id;
 
@@ -608,9 +604,11 @@ BEGIN
     END IF;
 
     -- Fetch the last pause spot
-    SELECT p_pause_spot INTO p_pause_spot
+    SELECT p_pause_spot
+    INTO p_pause_spot
     FROM Profile_Watched_Media
-    WHERE profile_id = input_profile_id AND media_id = input_media_id;
+    WHERE profile_id = input_profile_id
+      AND media_id = input_media_id;
 
     -- Check if the watch data exists
     IF p_pause_spot IS NULL THEN
@@ -640,7 +638,8 @@ BEGIN
     DECLARE media_exists INT;
 
     -- Validate that the media exists
-    SELECT COUNT(*) INTO media_exists
+    SELECT COUNT(*)
+    INTO media_exists
     FROM Media
     WHERE media_id = input_media_id;
 
@@ -654,9 +653,8 @@ BEGIN
     -- Log play action with update or insert
     INSERT INTO Profile_Watched_Media (profile_id, media_id, pause_spot, last_watch_date)
     VALUES (input_profile_id, input_media_id, '00:00:00', NOW())
-    ON DUPLICATE KEY UPDATE
-                         pause_spot = '00:00:00',
-                         last_watch_date = NOW();
+    ON DUPLICATE KEY UPDATE pause_spot      = '00:00:00',
+                            last_watch_date = NOW();
 
     -- Success message
     SET output_message = 'Media is playing.';
@@ -675,39 +673,42 @@ CREATE PROCEDURE Update_Profile_Preferences(
 )
 BEGIN
     DECLARE profile_exists INT;
+    DECLARE current_preference BOOLEAN;
     DECLARE rows_affected INT;
 
     -- Validate that the profile exists
-    SELECT COUNT(*) INTO profile_exists
+    SELECT COUNT(*), profile_movies_preferred
+    INTO profile_exists, current_preference
     FROM Profile
     WHERE profile_id = input_profile_id;
 
-    IF profile_exists = 0 THEN
+    IF profile_exists = 1 THEN
+        -- Check if the new value is different from the current value
+        IF input_profile_movies_preferred IS NOT NULL AND input_profile_movies_preferred != current_preference THEN
+            -- Update preferences in the database
+            UPDATE Profile
+            SET profile_movies_preferred = input_profile_movies_preferred
+            WHERE profile_id = input_profile_id;
+
+            -- Check if any row was updated
+            SET rows_affected = ROW_COUNT();
+
+            IF rows_affected = 1 THEN
+                SET output_message = 'Preferences updated successfully.';
+            ELSE
+                SET output_message = 'Failed to update preferences.';
+            END IF;
+        ELSE
+            -- No changes were made
+            SET output_message = 'Failed to update preferences due to no changes being made.';
+        END IF;
+    ELSE
+        -- Profile not found
         SET output_message = 'Profile not found.';
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = output_message;
     END IF;
-
-    -- Update preferences in the database
-    UPDATE Profile
-    SET profile_movies_preferred = COALESCE(input_profile_movies_preferred, 0)
-    WHERE profile_id = input_profile_id;
-
-    -- Check if any row was updated
-    SET rows_affected = ROW_COUNT();
-
-    IF rows_affected = 0 THEN
-        SET output_message = 'Failed to update preferences.';
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = output_message;
-    END IF;
-
-    -- Success message
-    SET output_message = 'Preferences updated successfully.';
 END //
 
 DELIMITER ;
-
 
 DELIMITER //
 
@@ -722,7 +723,8 @@ BEGIN
     DECLARE rows_affected INT;
 
     -- Validate that the account exists
-    SELECT COUNT(*) INTO account_exists
+    SELECT COUNT(*)
+    INTO account_exists
     FROM Account
     WHERE account_id = input_account_id;
 
@@ -731,7 +733,8 @@ BEGIN
     END IF;
 
     -- Validate that the subscription exists
-    SELECT COUNT(*) INTO subscription_exists
+    SELECT COUNT(*)
+    INTO subscription_exists
     FROM Subscription
     WHERE subscription_id = input_subscription_id;
 
@@ -787,7 +790,8 @@ BEGIN
     DECLARE rows_affected INT;
 
     -- Delete the token from the Tokens table
-    DELETE FROM Tokens
+    DELETE
+    FROM Tokens
     WHERE token = input_token;
 
     -- Check if any row was deleted
@@ -860,7 +864,8 @@ CREATE PROCEDURE Delete_From_Profile_Watch_List(
 )
 BEGIN
     -- Delete the row from the Profile_Watch_List table
-    DELETE FROM Profile_Watch_List
+    DELETE
+    FROM Profile_Watch_List
     WHERE profile_id = input_profile_id
       AND media_id = input_media_id
       AND (
@@ -920,29 +925,31 @@ BEGIN
     DECLARE rows_affected INT;
 
     -- Check if the series exists
-    SELECT COUNT(*) INTO series_exists
+    SELECT COUNT(*)
+    INTO series_exists
     FROM Series
     WHERE series_id = input_id;
 
-    IF series_exists = 0 THEN
-        SET result_message = 'Series not found.';
-    END IF;
+    IF series_exists = 1 THEN
 
-    -- Update the Series table with the provided values
-    UPDATE Series
-    SET
-        title = input_title,
-        genre_id = input_genre_id,
-        number_of_seasons = input_number_of_seasons
-    WHERE series_id = input_id;
+        -- Update the Series table with the provided values
+        UPDATE Series
+        SET title             = input_title,
+            genre_id          = input_genre_id,
+            number_of_seasons = input_number_of_seasons
+        WHERE series_id = input_id;
 
-    -- Check if any row was updated
-    SET rows_affected = ROW_COUNT();
+        -- Check if any row was updated
+        SET rows_affected = ROW_COUNT();
 
-    IF rows_affected > 0 AND result_message <> 'Series not found.' THEN
-        SET result_message = 'Series updated successfully.';
+        IF rows_affected > 0 THEN
+            SET result_message = 'Series updated successfully.';
+        ELSE
+            SET result_message = 'Failed to update series. No changes made.';
+        END IF;
+
     ELSE
-        SET result_message = 'Failed to update series. No changes made.';
+        SET result_message = 'Series not found.';
     END IF;
 END //
 
@@ -959,25 +966,30 @@ BEGIN
     DECLARE rows_affected INT;
 
     -- Check if the series exists
-    SELECT COUNT(*) INTO series_exists
+    SELECT COUNT(*)
+    INTO series_exists
     FROM Series
     WHERE series_id = input_id;
 
-    IF series_exists = 0 THEN
-        SET result_message = 'Series not found.';
-    END IF;
+    IF series_exists = 1 THEN
 
-    -- Delete the series from the Series table
-    DELETE FROM Series
-    WHERE series_id = input_id;
 
-    -- Check if any row was deleted
-    SET rows_affected = ROW_COUNT();
+        -- Delete the series from the Series table
+        DELETE
+        FROM Series
+        WHERE series_id = input_id;
 
-    IF rows_affected > 0 THEN
-        SET result_message = 'Series deleted successfully.';
+        -- Check if any row was deleted
+        SET rows_affected = ROW_COUNT();
+
+        IF rows_affected > 0 THEN
+            SET result_message = 'Series deleted successfully.';
+        ELSE
+            SET result_message = 'Failed to delete series.';
+        END IF;
+
     ELSE
-        SET result_message = 'Failed to delete series.';
+        SET result_message = 'Series not found.';
     END IF;
 END //
 
@@ -1027,31 +1039,33 @@ BEGIN
     DECLARE rows_affected INT;
 
     -- Check if the episode exists in the Media table
-    SELECT COUNT(*) INTO episode_exists
+    SELECT COUNT(*)
+    INTO episode_exists
     FROM Media
     WHERE media_id = input_id;
 
-    IF episode_exists = 0 THEN
-        SET result_message = 'Episode not found.';
-    END IF;
+    IF episode_exists = 1 THEN
 
-    -- Update the episode in the Media table
-    UPDATE Media
-    SET
-        title = input_title,
-        duration = input_duration,
-        series_id = input_series_id,
-        season = input_season,
-        genre_id = input_genre_id
-    WHERE media_id = input_id;
 
-    -- Check if any row was updated
-    SET rows_affected = ROW_COUNT();
+        -- Update the episode in the Media table
+        UPDATE Media
+        SET title     = input_title,
+            duration  = input_duration,
+            series_id = input_series_id,
+            season    = input_season,
+            genre_id  = input_genre_id
+        WHERE media_id = input_id;
 
-    IF rows_affected > 0 THEN
-        SET result_message = 'Episode updated successfully.';
+        -- Check if any row was updated
+        SET rows_affected = ROW_COUNT();
+
+        IF rows_affected > 0 THEN
+            SET result_message = 'Episode updated successfully.';
+        ELSE
+            SET result_message = 'Failed to update episode.';
+        END IF;
     ELSE
-        SET result_message = 'Failed to update episode.';
+        SET result_message = 'Episode not found.';
     END IF;
 END //
 
@@ -1068,25 +1082,29 @@ BEGIN
     DECLARE rows_affected INT;
 
     -- Check if the episode exists in the Media table
-    SELECT COUNT(*) INTO episode_exists
+    SELECT COUNT(*)
+    INTO episode_exists
     FROM Media
     WHERE media_id = input_id;
 
-    IF episode_exists = 0 THEN
-        SET result_message = 'Episode not found.';
-    END IF;
+    IF episode_exists = 1 THEN
 
-    -- Delete the episode from the Media table
-    DELETE FROM Media
-    WHERE media_id = input_id;
 
-    -- Check if any row was deleted
-    SET rows_affected = ROW_COUNT();
+        -- Delete the episode from the Media table
+        DELETE
+        FROM Media
+        WHERE media_id = input_id;
 
-    IF rows_affected > 0 THEN
-        SET result_message = 'Episode deleted successfully.';
+        -- Check if any row was deleted
+        SET rows_affected = ROW_COUNT();
+
+        IF rows_affected > 0 THEN
+            SET result_message = 'Episode deleted successfully.';
+        ELSE
+            SET result_message = 'Failed to delete episode.';
+        END IF;
     ELSE
-        SET result_message = 'Failed to delete episode.';
+        SET result_message = 'Episode not found.';
     END IF;
 END //
 

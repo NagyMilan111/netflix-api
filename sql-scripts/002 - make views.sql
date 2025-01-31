@@ -306,3 +306,17 @@ SELECT
 FROM
     Media
 WHERE series_id IS NOT NULL AND season IS NOT NULL;
+
+CREATE VIEW Get_Profile_Id AS
+SELECT
+    profile_id
+FROM
+    Profile;
+
+CREATE VIEW List_Watch_List AS
+SELECT
+    media_id,
+    series_id,
+    profile_id
+FROM
+    Profile_Watch_List;

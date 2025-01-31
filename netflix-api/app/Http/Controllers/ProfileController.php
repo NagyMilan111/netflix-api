@@ -12,9 +12,6 @@ class ProfileController extends Controller
      * Update preferences for a profile.
      */
 
-    /*TODO: This will give an error if we try to update the field with false, if the field is already false (same goes for true).
-    Procedure has to be fixed to account for this. */
-
     public function updatePreferences(Request $request)
     {
         try {
@@ -30,8 +27,10 @@ class ProfileController extends Controller
 
             } else if ($message == 'Failed to update preferences.') {
                 return $this->respond(['error' => 'Failed to update preferences.'], $request, 500);
-            } else {
+            } else if ($message == 'Profile not found.') {
                 return $this->respond(['message' => $message], $request, 404);
+            } else {
+                return $this->respond(['message' => $message], $request, 400);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
@@ -42,20 +41,22 @@ class ProfileController extends Controller
      * Get a user's watchlist.
      */
 
-    //TODO: This returns null right now, fix the stored procedure for it
     public function getToWatchList($id, Request $request)
     {
         try {
-            DB::select('CALL Get_Watch_List(?, @message)', [$id]);
-
-            $result = DB::select('SELECT @message as message')[0];
-            $message = $result->message;
-
-            if ($message != 'No watchlist found for this profile.') {
-                return $this->respond(['watchList' => $message], $request, 200);
+            $profile = DB::select('SELECT * FROM Get_Profile_Id WHERE profile_id = ?', [$id]);
+            if ($profile == null) {
+                return $this->respond(['error' => 'Profile not found.'], $request, 404);
             } else {
-                return $this->respond(['error' => 'Watch List not found.'], $request, 404);
+                $watchList = DB::select('SELECT * FROM List_Watch_List WHERE profile_id = ?', [$id]);
+                if ($watchList == null) {
+                    return $this->respond(['error' => 'Profile has no watch list.'], $request, 404);
+                }
+                else{
+                    return $this->respond(['values' => $watchList], $request, 200);
+                }
             }
+
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
         }

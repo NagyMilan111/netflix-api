@@ -70,7 +70,6 @@ class SeriesController extends Controller
     }
 
 
-    //TODO: Fix the stored procedure for this, currently it will not return 'Series not found.', instead it defaults to the last error msg
     // Update an existing series
     public function updateSeries(Request $request, $id)
     {
@@ -95,7 +94,7 @@ class SeriesController extends Controller
             } elseif ($message == 'Series not found.') {
                 return $this->respond(['message' => 'Series not found.'], $request, 404);
             } else {
-                return $this->respond(['message' => $message], $request, 500);
+                return $this->respond(['message' => $message], $request, 400);
             }
 
         } catch (\Exception $e) {
@@ -105,7 +104,6 @@ class SeriesController extends Controller
     }
 
 
-    //TODO: Same as above
     // Delete a series
     public function deleteSeries($id, Request $request)
     {
