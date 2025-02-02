@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Episode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Spatie\ArrayToXml\ArrayToXml;
 
 class EpisodeController extends Controller
 {
@@ -61,7 +60,7 @@ class EpisodeController extends Controller
             $message = $result->message;
 
             if ($message == 'Episode inserted successfully.') {
-                return $this->respond(['message' => $message], $request);
+                return $this->respond(['message' => $message], $request, 201);
             } else {
                 return $this->respond(['error' => $message], $request, 500);
             }
@@ -89,7 +88,7 @@ class EpisodeController extends Controller
             } elseif ($message == 'Failed to update episode.') {
                 return $this->respond(['error' => $message], $request, 500);
             } else {
-                return $this->respond(['message' => $message], $request);
+                return $this->respond(['message' => $message], $request, 400);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e->getMessage()], $request, 500);
@@ -109,7 +108,7 @@ class EpisodeController extends Controller
             } elseif ($message == 'Failed to delete episode.') {
                 return $this->respond(['error' => $message], $request, 500);
             } else {
-                return $this->respond(['message' => $message], $request);
+                return $this->respond(['message' => $message], $request, 200);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e->getMessage()], $request, 500);

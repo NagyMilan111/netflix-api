@@ -62,7 +62,7 @@ class SeriesController extends Controller
             if ($message == 'Series inserted successfully.') {
                 return $this->respond(['message' => 'Series inserted successfully.'], $request, 201);
             } else {
-                return $this->respond(['message' => $message], $request, 500);
+                return $this->respond(['error' => $message], $request, 500);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
@@ -92,9 +92,9 @@ class SeriesController extends Controller
             if ($message == 'Series updated successfully.') {
                 return $this->respond(['message' => 'Series updated successfully.'], $request, 200);
             } elseif ($message == 'Series not found.') {
-                return $this->respond(['message' => 'Series not found.'], $request, 404);
+                return $this->respond(['error' => 'Series not found.'], $request, 404);
             } else {
-                return $this->respond(['message' => $message], $request, 400);
+                return $this->respond(['error' => $message], $request, 400);
             }
 
         } catch (\Exception $e) {

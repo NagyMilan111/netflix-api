@@ -154,6 +154,6 @@ CREATE TABLE IF NOT EXISTS `Logs` (
 
 -- 17. Create Tokens
 CREATE TABLE IF NOT EXISTS `Tokens` (
-    account_id INT(11) NOT NULL,
+    account_id INT(11) PRIMARY KEY,
     token VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB;

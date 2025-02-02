@@ -20,7 +20,6 @@ BEGIN
 
         IF series_exists = 0 THEN
             SET result_message = 'Series does not exist.';
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
         END IF;
     END IF;
 
@@ -32,7 +31,6 @@ BEGIN
 
         IF genre_exists = 0 THEN
             SET result_message = 'Genre does not exist.';
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
         END IF;
     END IF;
 
@@ -55,6 +53,7 @@ CREATE PROCEDURE Add_Profile(
 )
 BEGIN
     DECLARE account_exists INT;
+    DECLARE amount_of_profiles INT;
 
     SELECT COUNT(*)
     INTO account_exists
@@ -63,22 +62,33 @@ BEGIN
 
     IF account_exists = 0 THEN
         SET result_message = 'Account not found.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
-        INSERT INTO Profile (account_id,
-                             profile_name,
-                             profile_image,
-                             profile_age,
-                             profile_lang,
-                             profile_movies_preferred)
-        VALUES (p_account_id,
-                p_profile_name,
-                p_profile_image,
-                p_profile_age,
-                p_profile_lang,
-                p_profile_movies_preferred);
 
-        SET result_message = 'Profile added successfully.';
+        SELECT COUNT(*)
+        INTO amount_of_profiles
+        FROM Profile
+        WHERE account_id = p_account_id;
+
+        IF amount_of_profiles < 4 THEN
+
+
+            INSERT INTO Profile (account_id,
+                                 profile_name,
+                                 profile_image,
+                                 profile_age,
+                                 profile_lang,
+                                 profile_movies_preferred)
+            VALUES (p_account_id,
+                    p_profile_name,
+                    p_profile_image,
+                    p_profile_age,
+                    p_profile_lang,
+                    p_profile_movies_preferred);
+
+            SET result_message = 'Profile added successfully.';
+        ELSE
+            SET result_message = 'Can not add profile, too many profiles present already.';
+        END IF;
     END IF;
 END //
 
@@ -102,7 +112,6 @@ BEGIN
 
     IF watchlist_exists > 0 THEN
         SET result_message = 'Watchlist already exists for this profile.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         INSERT INTO Profile_Watch_List (profile_id, media_id, series_id)
         VALUES (p_profile_id, media_id, series_id);
@@ -139,13 +148,10 @@ BEGIN
 
     IF inviter_exists = 0 THEN
         SET result_message = 'Inviter does not exist.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSEIF invitee_exists = 0 THEN
         SET result_message = 'Invitee does not exist.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSEIF invitee_already_invited > 0 THEN
         SET result_message = 'Invitee has already been invited.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         INSERT INTO Discounted_Users (account_id, invited_account_id)
         VALUES (inviter_account_id, invitee_account_id);
@@ -170,6 +176,7 @@ CREATE PROCEDURE Block_User(
 )
 BEGIN
     DECLARE user_exists INT;
+    DECLARE rows_affected INT;
 
     SELECT COUNT(*)
     INTO user_exists
@@ -178,13 +185,18 @@ BEGIN
 
     IF user_exists = 0 THEN
         SET result_message = 'User not found.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         UPDATE Account
         SET blocked = 1
         WHERE email = user_email;
 
-        SET result_message = 'User successfully blocked.';
+        SET rows_affected = ROW_COUNT();
+
+        IF rows_affected > 0 THEN
+            SET result_message = 'User successfully blocked.';
+        ELSE
+            SET result_message = 'User already blocked.';
+        END IF;
     END IF;
 END //
 
@@ -204,7 +216,6 @@ BEGIN
 
     IF media_exists = 0 THEN
         SET result_message = 'Media not found.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         DELETE
         FROM Media
@@ -230,7 +241,6 @@ BEGIN
 
     IF profile_exists = 0 THEN
         SET result_message = 'Profile not found.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         DELETE
         FROM Profile
@@ -242,7 +252,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_User(
+CREATE PROCEDURE Remove_Account(
     IN user_account_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -256,7 +266,6 @@ BEGIN
 
     IF account_exists = 0 THEN
         SET result_message = 'Account not found.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         DELETE
         FROM Discounted_Users
@@ -291,7 +300,6 @@ BEGIN
 
     IF watchlist_exists = 0 THEN
         SET result_message = 'No watchlist exists for this profile.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         DELETE
         FROM Profile_Watch_List
@@ -329,10 +337,8 @@ BEGIN
 
     IF profile_exists = 0 THEN
         SET result_message = 'Profile does not exist.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSEIF media_exists = 0 THEN
         SET result_message = 'Media does not exist.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         INSERT INTO Profile_Watched_Media (profile_id, media_id, subtitle_id, pause_spot, times_watched,
                                            last_watch_date)
@@ -369,10 +375,8 @@ BEGIN
 
     IF profile_exists = 0 THEN
         SET result_message = 'Profile does not exist.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSEIF genre_exists = 0 THEN
         SET result_message = 'Genre does not exist.';
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = result_message;
     ELSE
         INSERT INTO Profile_Genre (profile_id, genre_id)
         VALUES (p_profile_id, p_genre_id)
@@ -546,34 +550,48 @@ CREATE PROCEDURE Update_Pause_Spot(
 )
 BEGIN
     DECLARE row_count INT;
+    DECLARE profile_exists INT;
+    DECLARE media_exists INT;
 
-    -- Validate the profile_id
-    IF NOT EXISTS (SELECT 1 FROM Profile WHERE profile_id = input_profile_id) THEN
-        SET output_message = 'Invalid profile_id.';
+    SELECT COUNT(*)
+    INTO profile_exists
+    FROM Profile
+    WHERE profile_id = input_profile_id;
+
+    IF profile_exists > 0 THEN
+
+        SELECT COUNT(*)
+        INTO media_exists
+        FROM Media
+        WHERE media_id = input_media_id;
+
+        IF media_exists > 0 THEN
+
+            -- Update the pause_spot for the given media
+            UPDATE Profile_Watched_Media
+            SET pause_spot = input_pause_spot
+            WHERE profile_id = input_profile_id
+              AND media_id = input_media_id;
+
+            -- Check if any row was updated
+            SET row_count = ROW_COUNT();
+
+            IF row_count = 0 THEN
+                SET output_message = 'Failed to update pause spot.';
+                SET output_pause_spot = NULL;
+            END IF;
+
+            -- Success message
+            SET output_message = 'Media paused.';
+            SET output_pause_spot = input_pause_spot;
+        ELSE
+            SET output_message = 'Media not found.';
+            SET output_pause_spot = NULL;
+        END IF;
+    ELSE
+        SET output_message = 'Profile not found.';
         SET output_pause_spot = NULL;
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = output_message;
     END IF;
-
-    -- Update the pause_spot for the given media
-    UPDATE Profile_Watched_Media
-    SET pause_spot = input_pause_spot
-    WHERE profile_id = input_profile_id
-      AND media_id = input_media_id;
-
-    -- Check if any row was updated
-    SET row_count = ROW_COUNT();
-
-    IF row_count = 0 THEN
-        SET output_message = 'Failed to update pause spot or media not found.';
-        SET output_pause_spot = NULL;
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = output_message;
-    END IF;
-
-    -- Success message
-    SET output_message = 'Media paused.';
-    SET output_pause_spot = input_pause_spot;
 END //
 
 DELIMITER ;
@@ -589,6 +607,7 @@ CREATE PROCEDURE Fetch_Pause_Spot(
 BEGIN
     DECLARE p_pause_spot TIME;
     DECLARE media_exists INT;
+    DECLARE profile_exists INT;
 
     -- Validate that the media exists
     SELECT COUNT(*)
@@ -596,31 +615,42 @@ BEGIN
     FROM Media
     WHERE media_id = input_media_id;
 
-    IF media_exists = 0 THEN
+    IF media_exists > 0 THEN
+
+
+        SELECT COUNT(*)
+        INTO profile_exists
+        FROM Profile
+        WHERE profile_id = input_profile_id;
+
+        IF profile_exists > 0 THEN
+
+            -- Fetch the last pause spot
+            SELECT p_pause_spot
+            INTO p_pause_spot
+            FROM Profile_Watched_Media
+            WHERE profile_id = input_profile_id
+              AND media_id = input_media_id;
+
+            -- Check if the watch data exists
+            IF p_pause_spot IS NOT NULL THEN
+
+                -- Success message
+                SET output_message = 'Media resumed.';
+                SET output_pause_spot = p_pause_spot;
+            ELSE
+                SET output_message = 'No watch data was found for this media.';
+                SET output_pause_spot = NULL;
+            END IF;
+
+        ELSE
+            SET output_message = 'Profile not found.';
+            SET output_pause_spot = NULL;
+        END IF;
+    ELSE
         SET output_message = 'Media not found.';
         SET output_pause_spot = NULL;
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = output_message;
     END IF;
-
-    -- Fetch the last pause spot
-    SELECT p_pause_spot
-    INTO p_pause_spot
-    FROM Profile_Watched_Media
-    WHERE profile_id = input_profile_id
-      AND media_id = input_media_id;
-
-    -- Check if the watch data exists
-    IF p_pause_spot IS NULL THEN
-        SET output_message = 'No watch data found for the profile and media.';
-        SET output_pause_spot = NULL;
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = output_message;
-    END IF;
-
-    -- Success message
-    SET output_message = 'Media resumed.';
-    SET output_pause_spot = p_pause_spot;
 END //
 
 DELIMITER ;
@@ -636,8 +666,8 @@ CREATE PROCEDURE Log_Play_Action(
 )
 BEGIN
     DECLARE media_exists INT;
+    DECLARE profile_exists INT;
 
-    -- Validate that the media exists
     SELECT COUNT(*)
     INTO media_exists
     FROM Media
@@ -646,19 +676,29 @@ BEGIN
     IF media_exists = 0 THEN
         SET output_message = 'Media not found.';
         SET output_media_id = NULL;
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = output_message;
+    ELSE
+
+        SELECT COUNT(*)
+        INTO profile_exists
+        FROM Profile
+        WHERE profile_id = input_profile_id;
+
+        IF profile_exists > 0 THEN
+
+            INSERT INTO Profile_Watched_Media (profile_id, media_id, pause_spot, last_watch_date)
+            VALUES (input_profile_id, input_media_id, '00:00:00', NOW())
+            ON DUPLICATE KEY UPDATE pause_spot      = '00:00:00',
+                                    last_watch_date = NOW();
+
+            -- Success message
+            SET output_message = 'Media is playing.';
+            SET output_media_id = input_media_id;
+
+        ELSE
+            SET output_message = 'Profile not found.';
+            SET output_media_id = NULL;
+        END IF;
     END IF;
-
-    -- Log play action with update or insert
-    INSERT INTO Profile_Watched_Media (profile_id, media_id, pause_spot, last_watch_date)
-    VALUES (input_profile_id, input_media_id, '00:00:00', NOW())
-    ON DUPLICATE KEY UPDATE pause_spot      = '00:00:00',
-                            last_watch_date = NOW();
-
-    -- Success message
-    SET output_message = 'Media is playing.';
-    SET output_media_id = input_media_id;
 END //
 
 DELIMITER ;
@@ -728,34 +768,39 @@ BEGIN
     FROM Account
     WHERE account_id = input_account_id;
 
-    IF account_exists = 0 THEN
-        SET result_message = 'Account not found.';
-    END IF;
+    IF account_exists = 1 THEN
 
-    -- Validate that the subscription exists
-    SELECT COUNT(*)
-    INTO subscription_exists
-    FROM Subscription
-    WHERE subscription_id = input_subscription_id;
 
-    IF subscription_exists = 0 THEN
+        -- Validate that the subscription exists
+        SELECT COUNT(*)
+        INTO subscription_exists
+        FROM Subscription
+        WHERE subscription_id = input_subscription_id;
+
+        IF subscription_exists = 1 THEN
+
+
+            -- Update the subscription details for the given account
+            UPDATE Account
+            SET subscription_id = input_subscription_id
+            WHERE account_id = input_account_id;
+
+            -- Check if any row was updated
+            SET rows_affected = ROW_COUNT();
+
+            IF rows_affected = 0 THEN
+                SET result_message = 'Failed to update subscription. No changes made.';
+            ELSE
+                SET result_message = 'Subscription updated successfully.';
+            END IF;
+
+        ELSE
         SET result_message = 'Subscription not found.';
+        END IF;
+
+    ELSE
+    SET result_message = 'Account not found.';
     END IF;
-
-    -- Update the subscription details for the given account
-    UPDATE Account
-    SET subscription_id = input_subscription_id
-    WHERE account_id = input_account_id;
-
-    -- Check if any row was updated
-    SET rows_affected = ROW_COUNT();
-
-    IF rows_affected = 0 THEN
-        SET result_message = 'Failed to update subscription.';
-    END IF;
-
-    -- Success message
-    SET result_message = 'Subscription updated successfully.';
 END //
 
 DELIMITER ;
@@ -1062,7 +1107,7 @@ BEGIN
         IF rows_affected > 0 THEN
             SET result_message = 'Episode updated successfully.';
         ELSE
-            SET result_message = 'Failed to update episode.';
+            SET result_message = 'Failed to update episode. No changes made.';
         END IF;
     ELSE
         SET result_message = 'Episode not found.';
@@ -1106,6 +1151,68 @@ BEGIN
     ELSE
         SET result_message = 'Episode not found.';
     END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Update_Profile_Viewing_Classification(
+    IN input_profile_id INT,
+    IN input_classification_id INT,
+    IN input_action VARCHAR(255),
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE profile_exists INT;
+    DECLARE classification_exists INT;
+    DECLARE rows_affected INT;
+
+    SELECT COUNT(*)
+    INTO profile_exists
+    FROM Profile
+    WHERE profile_id = input_profile_id;
+
+    IF profile_exists > 0 THEN
+
+        SELECT COUNT(*)
+        INTO classification_exists
+        FROM Viewing_Classification
+        WHERE classification_id = input_classification_id;
+
+        IF classification_exists > 0 THEN
+
+            IF input_action = 'add' THEN
+
+                INSERT INTO Profile_Viewing_Classification (profile_id, classification_id)
+                VALUES (input_profile_id, input_classification_id);
+
+                SET rows_affected = ROW_COUNT();
+
+                IF rows_affected > 0 THEN
+                    SET result_message = 'Viewing classification added successfully.';
+                ELSE
+                    SET result_message = 'Failed to add viewing classification.';
+                END IF;
+            ELSE
+                DELETE FROM Profile_Viewing_Classification
+                WHERE profile_id = input_profile_id AND classification_id = input_classification_id;
+
+                SET rows_affected = ROW_COUNT();
+
+                IF rows_affected > 0 THEN
+                    SET result_message = 'Viewing classification removed successfully.';
+                ELSE
+                    SET result_message = 'Failed to remove viewing classification.';
+                END IF;
+            END IF;
+        ELSE
+            SET result_message = 'Viewing classification not found.';
+        END IF;
+    ELSE
+        SET result_message = 'Profile not found.';
+    END IF;
+
 END //
 
 DELIMITER ;

@@ -19,26 +19,27 @@ Route::any('/api/{endpoint}', [MainApiController::class, 'routeRequest']);
 Route::prefix('account')->group(function () {
     Route::post('/login', [AccountController::class, 'login']);
     Route::post('/register', [AccountController::class, 'register']);
-    Route::post('/reset-password', [AccountController::class, 'resetPassword']);
+    Route::put('/reset-password', [AccountController::class, 'resetPassword']);
     Route::post('/logout', [AccountController::class, 'logout']);
-    Route::post('/block', [AccountController::class, 'blockAccount']);
+    Route::put('/block', [AccountController::class, 'blockAccount']);
     Route::delete('/{id}', [AccountController::class, 'deleteProfile'])->whereNumber('id');
     Route::post('/', [AccountController::class, 'addProfile']);
-
+    Route::delete('/delete/{id}', [AccountController::class, 'deleteAccount'])->whereNumber('id');
 });
 
 // Media Routes
 Route::prefix('media')->group(function () {
     Route::get('/{id}/play', [MediaController::class, 'playMedia'])->whereNumber('id');
-    Route::post('/{id}/pause', [MediaController::class, 'pauseMedia'])->whereNumber('id');
+    Route::put('/{id}/pause', [MediaController::class, 'pauseMedia'])->whereNumber('id');
     Route::post('/{id}/resume', [MediaController::class, 'resumeMedia'])->whereNumber('id');
 });
 
 // Profile Routes
 Route::prefix('profile')->group(function () {
-    Route::put('/preferences', [ProfileController::class, 'updatePreferences']);
+    Route::put('/{id}/preferences', [ProfileController::class, 'updatePreferences'])->whereNumber('id');
     Route::get('/{id}/toWatch', [ProfileController::class, 'getToWatchList'])->whereNumber('id');
     Route::put('/{id}/updateWatchList', [ProfileController::class, 'manageWatchList'])->whereNumber('id');
+    Route::put('/{id}/updateViewClassifications', [ProfileController::class, 'updateViewClassifications'])->whereNumber('id');
 });
 
 // Subscription Routes

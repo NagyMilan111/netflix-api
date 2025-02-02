@@ -18,7 +18,7 @@ class SubscriptionController extends Controller
             if ($result[0] == null) {
                 return $this->respond(['error' => 'Subscription details not found.'], $request, 404);
             } else {
-                return $this->respond(['details' => $result], $request, 200);
+                return $this->respond(['values' => $result], $request, 200);
             }
         }
         catch (\Exception $e) {
@@ -41,7 +41,7 @@ class SubscriptionController extends Controller
 
             if ($message == 'Subscription updated successfully.') {
                 return $this->respond(['message' => 'Subscription updated successfully.'], $request, 200);
-            } elseif ($message = 'Failed to update subscription.') {
+            } elseif ($message = 'Failed to update subscription. No changes made.') {
                 return $this->respond(['error' => $message], $request, 400);
             } else {
                 return $this->respond(['error' => $message], $request, 404);

@@ -6,13 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Crypt;
 
 class AccountController extends Controller
 {
     /**
      * Login a user and return a token.
      */
+
+    //TODO: Block account after 3 unsuccessful login attempts
     public function login(Request $request)
     {
         try {
@@ -107,8 +108,8 @@ class AccountController extends Controller
                 ], $request, 201);
             } elseif ($message == 'Email already exists.') {
                 return $this->respond([
-                    'message' => 'Email already exists.',
-                ], $request, 401);
+                    'error' => 'Email already exists.',
+                ], $request, 400);
             }
         } catch (\Exception $e) {
             \Log::error('Register Error: ' . $e->getMessage());
@@ -134,16 +135,19 @@ class AccountController extends Controller
             $tokenExists = DB::select('SELECT * FROM Get_Token WHERE token = ?', [$token]);
 
             if (!$tokenExists) {
-                return $this->respond(['error' => 'Token not found or invalid'], $request, 401);
+                return $this->respond(['error' => 'Token not found or invalid.'], $request, 404);
             }
 
             // Delete the token from the database
-            $deleted = DB::select('CALL Delete_Token(?)', [$token]);
+            DB::select('CALL Delete_Token(?, @message)', [$token]);
 
-            if ($deleted[0] == 'Token deleted successfully.') {
-                return $this->respond(['message' => 'Logged out successfully'], $request, 200);
+            $result = DB::select('SELECT @message AS message')[0];
+            $message = $result->message;
+
+            if ($message == 'Token deleted successfully.') {
+                return $this->respond(['message' => 'Logged out successfully.'], $request, 200);
             } else {
-                return $this->respond(['error' => 'Failed to log out'], $request, 500);
+                return $this->respond(['error' => 'Failed to log out.'], $request, 500);
             }
         } catch (\Exception $e) {
             \Log::error('Logout Error: ' . $e->getMessage());
@@ -202,8 +206,11 @@ class AccountController extends Controller
 
             if ($message == 'User successfully blocked.') {
                 return $this->respond(['message' => $message], $request, 200);
-            } elseif ($message == 'User not found.') {
+            } else if ($message == 'User not found.') {
                 return $this->respond(['error' => $message], $request, 404);
+            }
+            else{
+                return $this->respond(['error' => $message], $request, 400);
             }
 
         } catch (\Exception $e) {
@@ -263,10 +270,35 @@ class AccountController extends Controller
 
             if ($message == 'Profile added successfully.') {
                 return $this->respond(['message' => 'Profile added successfully.'], $request, 201);
-            } else {
+            } else if ($message == 'Account not found.'){
                 return $this->respond(['message' => $message], $request, 404);
             }
+            else {
+                return $this->respond(['error' => $message], $request, 400);
+            }
         } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
+        }
+    }
+
+    public function deleteAccount(Request $request, $id)
+    {
+        try{
+
+            DB::select('CALL Remove_Account(?, @message)', [$id]);
+
+            $result = DB::select('SELECT @message AS message')[0];
+            $message = $result->message;
+
+            if ($message == 'Account removed successfully.') {
+                return $this->respond(['message' => $message], $request, 200);
+            }
+            else{
+                return $this->respond(['message' => $message], $request, 404);
+            }
+
+        }
+        catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
         }
     }

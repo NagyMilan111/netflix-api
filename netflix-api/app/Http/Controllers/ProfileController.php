@@ -12,13 +12,12 @@ class ProfileController extends Controller
      * Update preferences for a profile.
      */
 
-    public function updatePreferences(Request $request)
+    public function updatePreferences(Request $request, $id)
     {
         try {
-            $profile_id = $request->input('profile_id');
             $movies_preferred = $request->input('movies_preferred');
 
-            DB::select('CALL Update_Profile_Preferences(?, ?, @message)', [$profile_id, $movies_preferred]);
+            DB::select('CALL Update_Profile_Preferences(?, ?, @message)', [$id, $movies_preferred]);
             $result = DB::select('SELECT @message as message')[0];
             $message = $result->message;
 
@@ -28,9 +27,9 @@ class ProfileController extends Controller
             } else if ($message == 'Failed to update preferences.') {
                 return $this->respond(['error' => 'Failed to update preferences.'], $request, 500);
             } else if ($message == 'Profile not found.') {
-                return $this->respond(['message' => $message], $request, 404);
+                return $this->respond(['error' => $message], $request, 404);
             } else {
-                return $this->respond(['message' => $message], $request, 400);
+                return $this->respond(['error' => $message], $request, 400);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
@@ -86,7 +85,7 @@ class ProfileController extends Controller
                 if ($message == 'Row inserted into Profile_Watch_List successfully.') {
                     return $this->respond(['message' => 'Media added to watchlist.'], $request, 201);
                 } else {
-                    return $this->respond(['message' => 'Something went wrong.'], $request, 500);
+                    return $this->respond(['error' => 'Something went wrong.'], $request, 500);
                 }
             } else {
                 // Remove media from the watchlist
@@ -100,12 +99,46 @@ class ProfileController extends Controller
                         'message' => 'Media removed from watchlist.'
                     ], $request, 200);
                 } else {
-                    return $this->respond(['message' => $message], $request, 404);
+                    return $this->respond(['error' => $message], $request, 404);
                 }
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
         }
+    }
+
+    public function updateViewClassifications(Request $request, $id)
+    {
+        try {
+            $classificationId = $request->input('classification_id');
+            $action = $request->input('action');
+            $validActions = ['add', 'remove'];
+
+            if(in_array($action, $validActions)) {
+                DB::select('CALL Update_Profile_Viewing_Classification(?, ?, ?, @message)', [$id, $classificationId, $action]);
+                $result = DB::select('SELECT @message a s message')[0];
+                $message = $result->message;
+
+                if($message == 'Profile not found.' || $message == 'Viewing classification not found.') {
+                    return $this->respond(['error' => $message], $request, 404);
+                }
+                else if ($message == 'Failed to remove viewing classification.' || $message == 'Failed to add viewing classification.') {
+                    return $this->respond(['error' => $message], $request, 500);
+                }
+                else if($message == 'Viewing classification added successfully.'){
+                    return $this->respond(['message' => $message], $request, 201);
+                }
+                else {
+                    return $this->respond(['message' => $message], $request, 200);
+                }
+            }
+            else {
+                return $this->respond(['error' => 'Invalid action.'], $request, 400);
+            }
+        } catch(\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
+        }
+
     }
 
 }
