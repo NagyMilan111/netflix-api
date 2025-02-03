@@ -795,11 +795,11 @@ BEGIN
             END IF;
 
         ELSE
-        SET result_message = 'Subscription not found.';
+            SET result_message = 'Subscription not found.';
         END IF;
 
     ELSE
-    SET result_message = 'Account not found.';
+        SET result_message = 'Account not found.';
     END IF;
 END //
 
@@ -814,12 +814,18 @@ CREATE PROCEDURE Insert_Token(
     OUT result_message VARCHAR(255)
 )
 BEGIN
-    -- Insert the token into the Tokens table
+    DECLARE rows_affected INT;
+
     INSERT INTO Tokens (account_id, token)
     VALUES (input_account_id, input_token);
 
-    -- Set the success message
-    SET result_message = 'Token inserted successfully.';
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Token inserted successfully.';
+    ELSE
+        SET  result_message = 'Something went wrong.';
+    END IF;
 END //
 
 DELIMITER ;
@@ -881,19 +887,79 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Insert_Into_Profile_Watch_List(
+CREATE PROCEDURE Update_Profile_Watch_List(
     IN input_profile_id INT,
     IN input_media_id INT,
     IN input_series_id INT,
+    IN input_action varchar(255),
     OUT result_message VARCHAR(255)
 )
 BEGIN
-    -- Insert a new row into the Profile_Watch_List table
-    INSERT INTO Profile_Watch_List (profile_id, media_id, series_id)
-    VALUES (input_profile_id, input_media_id, input_series_id);
+    DECLARE profile_exists INT;
+    DECLARE media_exists INT;
+    DECLARE series_exists INT;
+    DECLARE rows_affected INT;
 
-    -- Set success message
-    SET result_message = 'Row inserted into Profile_Watch_List successfully.';
+    SELECT COUNT(*)
+    INTO profile_exists
+    FROM Profile
+    WHERE profile_id = input_profile_id;
+
+    IF profile_exists > 0 THEN
+
+        SELECT COUNT(*)
+        INTO media_exists
+        FROM Media
+        WHERE media_id = input_media_id;
+
+        IF media_exists > 0 THEN
+
+            SELECT COUNT(*)
+            INTO series_exists
+            FROM Series
+            WHERE series_id = input_series_id;
+
+            IF input_series_id IS NULL THEN
+
+                IF input_action = 'add' THEN
+                    INSERT INTO Profile_Watch_List (profile_id, media_id, series_id)
+                    VALUES (input_profile_id, input_media_id, NULL);
+                    SET rows_affected = ROW_COUNT();
+                    SET result_message = 'Media added to watch list successfully.';
+                ELSE
+                    DELETE
+                    FROM Profile_Watch_List
+                    WHERE profile_id = input_profile_id
+                      AND media_id = input_media_id
+                      AND series_id IS NULL;
+                    SET rows_affected = ROW_COUNT();
+                    SET result_message = 'Media removed from watch list successfully.';
+                END IF;
+
+            ELSEIF series_exists > 0 THEN
+                IF input_action = 'add' THEN
+                    INSERT INTO Profile_Watch_List (profile_id, media_id, series_id)
+                    VALUES (input_profile_id, input_media_id, input_series_id);
+                    SET rows_affected = ROW_COUNT();
+                    SET result_message = 'Media added to watch list successfully.';
+                ELSE
+                    DELETE
+                    FROM Profile_Watch_List
+                    WHERE profile_id = input_profile_id
+                      AND media_id = input_media_id
+                      AND series_id = series_id;
+                    SET rows_affected = ROW_COUNT();
+                    SET result_message = 'Media removed from watch list successfully.';
+                END IF;
+            ELSE
+                SET result_message = 'Series not found.';
+            END IF;
+        ELSE
+            SET result_message = 'Media not found.';
+        END IF;
+    ELSE
+        SET result_message = 'Profile not found.';
+    END IF;
 END //
 
 DELIMITER ;
@@ -938,18 +1004,29 @@ CREATE PROCEDURE Insert_Series(
 )
 BEGIN
     DECLARE rows_affected INT;
+    DECLARE genre_exists INT;
 
-    -- Insert the values into the Series table
-    INSERT INTO Series (title, genre_id, number_of_seasons)
-    VALUES (input_title, input_genre_id, input_number_of_seasons);
+    SELECT COUNT(*)
+    INTO genre_exists
+    FROM Genre
+    WHERE genre_id = input_genre_id;
 
-    -- Check if the insertion was successful
-    SET rows_affected = ROW_COUNT();
+    IF genre_exists > 0 THEN
 
-    IF rows_affected > 0 THEN
-        SET result_message = 'Series inserted successfully.';
+        -- Insert the values into the Series table
+        INSERT INTO Series (title, genre_id, number_of_seasons)
+        VALUES (input_title, input_genre_id, input_number_of_seasons);
+
+        -- Check if the insertion was successful
+        SET rows_affected = ROW_COUNT();
+
+        IF rows_affected > 0 THEN
+            SET result_message = 'Series inserted successfully.';
+        ELSE
+            SET result_message = 'Failed to insert series.';
+        END IF;
     ELSE
-        SET result_message = 'Failed to insert series.';
+        SET result_message = 'Genre not found.';
     END IF;
 END //
 
@@ -1052,17 +1129,39 @@ CREATE PROCEDURE Insert_Episode(
 )
 BEGIN
     DECLARE rows_affected INT;
+    DECLARE series_exists INT;
+    DECLARE genre_exists INT;
 
-    INSERT INTO Media (title, duration, series_id, season, genre_id)
-    VALUES (input_title, input_duration, input_series_id, input_season, input_genre_id);
+    SELECT COUNT(*)
+    INTO series_exists
+    FROM Series
+    WHERE series_id = input_series_id;
 
-    -- Check if the row was successfully inserted
-    SET rows_affected = ROW_COUNT();
+    IF series_exists > 0 THEN
 
-    IF rows_affected > 0 THEN
-        SET result_message = 'Episode inserted successfully.';
+        SELECT COUNT(*)
+        INTO genre_exists
+        FROM Genre
+        WHERE genre_id = input_genre_id;
+
+        IF genre_exists > 0 THEN
+
+            INSERT INTO Media (title, duration, series_id, season, genre_id)
+            VALUES (input_title, input_duration, input_series_id, input_season, input_genre_id);
+
+            -- Check if the row was successfully inserted
+            SET rows_affected = ROW_COUNT();
+
+            IF rows_affected > 0 THEN
+                SET result_message = 'Episode inserted successfully.';
+            ELSE
+                SET result_message = 'Failed to insert episode.';
+            END IF;
+        ELSE
+            SET result_message = 'Genre not found.';
+        END IF;
     ELSE
-        SET result_message = 'Failed to insert episode.';
+        SET result_message = 'Series not found.';
     END IF;
 END //
 
@@ -1083,34 +1182,57 @@ BEGIN
     DECLARE episode_exists INT;
     DECLARE rows_affected INT;
 
-    -- Check if the episode exists in the Media table
+    DECLARE series_exists INT;
+    DECLARE genre_exists INT;
+
     SELECT COUNT(*)
-    INTO episode_exists
-    FROM Media
-    WHERE media_id = input_id;
+    INTO series_exists
+    FROM Series
+    WHERE series_id = input_series_id;
 
-    IF episode_exists = 1 THEN
+    IF series_exists > 0 THEN
+
+        SELECT COUNT(*)
+        INTO genre_exists
+        FROM Genre
+        WHERE genre_id = input_genre_id;
+
+        IF genre_exists > 0 THEN
+
+            -- Check if the episode exists in the Media table
+            SELECT COUNT(*)
+            INTO episode_exists
+            FROM Media
+            WHERE media_id = input_id;
+
+            IF episode_exists > 0 THEN
 
 
-        -- Update the episode in the Media table
-        UPDATE Media
-        SET title     = input_title,
-            duration  = input_duration,
-            series_id = input_series_id,
-            season    = input_season,
-            genre_id  = input_genre_id
-        WHERE media_id = input_id;
+                -- Update the episode in the Media table
+                UPDATE Media
+                SET title     = input_title,
+                    duration  = input_duration,
+                    series_id = input_series_id,
+                    season    = input_season,
+                    genre_id  = input_genre_id
+                WHERE media_id = input_id;
 
-        -- Check if any row was updated
-        SET rows_affected = ROW_COUNT();
+                -- Check if any row was updated
+                SET rows_affected = ROW_COUNT();
 
-        IF rows_affected > 0 THEN
-            SET result_message = 'Episode updated successfully.';
+                IF rows_affected > 0 THEN
+                    SET result_message = 'Episode updated successfully.';
+                ELSE
+                    SET result_message = 'Failed to update episode. No changes made.';
+                END IF;
+            ELSE
+                SET result_message = 'Episode not found.';
+            END IF;
         ELSE
-            SET result_message = 'Failed to update episode. No changes made.';
+            SET result_message = 'Genre not found.';
         END IF;
     ELSE
-        SET result_message = 'Episode not found.';
+        SET result_message = 'Series not found.';
     END IF;
 END //
 
@@ -1195,8 +1317,10 @@ BEGIN
                     SET result_message = 'Failed to add viewing classification.';
                 END IF;
             ELSE
-                DELETE FROM Profile_Viewing_Classification
-                WHERE profile_id = input_profile_id AND classification_id = input_classification_id;
+                DELETE
+                FROM Profile_Viewing_Classification
+                WHERE profile_id = input_profile_id
+                  AND classification_id = input_classification_id;
 
                 SET rows_affected = ROW_COUNT();
 
@@ -1213,6 +1337,104 @@ BEGIN
         SET result_message = 'Profile not found.';
     END IF;
 
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Insert_Classification(
+    IN input_classification VARCHAR(255),
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE rows_affected INT;
+
+    INSERT INTO Viewing_Classification (classification)
+    VALUES (input_classification);
+
+    -- Check if the row was successfully inserted
+    SET rows_affected = ROW_COUNT();
+
+    IF rows_affected > 0 THEN
+        SET result_message = 'Classification inserted successfully.';
+    ELSE
+        SET result_message = 'Failed to insert classification.';
+    END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Update_Classification(
+    IN input_id INT,
+    IN input_classification INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE classification_exists INT;
+    DECLARE rows_affected INT;
+
+    SELECT COUNT(*)
+    INTO classification_exists
+    FROM Viewing_Classification
+    WHERE classification_id = input_id;
+
+    IF classification_exists > 0 THEN
+
+        UPDATE Viewing_Classification
+        SET classification = input_classification
+        WHERE classification_id = input_id;
+
+        -- Check if any row was updated
+        SET rows_affected = ROW_COUNT();
+
+        IF rows_affected > 0 THEN
+            SET result_message = 'Classification updated successfully.';
+        ELSE
+            SET result_message = 'Failed to update classification. No changes made.';
+        END IF;
+    ELSE
+        SET result_message = 'Classification not found.';
+    END IF;
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE PROCEDURE Delete_Classification(
+    IN input_id INT,
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE classification_exists INT;
+    DECLARE rows_affected INT;
+
+    SELECT COUNT(*)
+    INTO classification_exists
+    FROM Viewing_Classification
+    WHERE classification_id = input_id;
+
+    IF classification_exists > 0 THEN
+
+
+        DELETE
+        FROM Viewing_Classification
+        WHERE classification_id = input_id;
+
+        -- Check if any row was deleted
+        SET rows_affected = ROW_COUNT();
+
+        IF rows_affected > 0 THEN
+            SET result_message = 'Classification deleted successfully.';
+        ELSE
+            SET result_message = 'Failed to delete classification.';
+        END IF;
+    ELSE
+        SET result_message = 'Classification not found.';
+    END IF;
 END //
 
 DELIMITER ;

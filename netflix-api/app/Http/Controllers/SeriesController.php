@@ -31,7 +31,7 @@ class SeriesController extends Controller
             $series = DB::select('SELECT * FROM List_Series WHERE series_id = ?', [$id]);
 
             if ($series == null) {
-                return $this->respond(['message' => 'Series not found'], $request, 404);
+                return $this->respond(['error' => 'Series not found'], $request, 404);
             } else {
                 return $this->respond(['values' => $series], $request, 200);
             }
@@ -61,8 +61,11 @@ class SeriesController extends Controller
 
             if ($message == 'Series inserted successfully.') {
                 return $this->respond(['message' => 'Series inserted successfully.'], $request, 201);
-            } else {
+            } else if ($message == 'Failed to insert series.'){
                 return $this->respond(['error' => $message], $request, 500);
+            }
+            else{
+                return $this->respond(['error' => $message], $request, 404);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);

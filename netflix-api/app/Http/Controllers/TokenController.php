@@ -17,7 +17,7 @@ class TokenController extends Controller
             $user = DB::select('SELECT * FROM Get_Account_Id WHERE account_id = ?', [$id]);
 
             if ($user == null) {
-                return $this->respond(['error' => 'User not found'], $request, 404);
+                return $this->respond(['error' => 'User not found.'], $request, 404);
             } else {
 
                 // Generate a unique token
@@ -30,7 +30,7 @@ class TokenController extends Controller
                 $message = $result->message;
 
                 if ($message == 'Token inserted successfully.') {
-                    return $this->respond(['token' => $token], $request, 200);
+                    return $this->respond(['message' => $message, 'token' => $token], $request, 201);
                 } else {
                     return $this->respond(['error' => 'Something went wrong.'], $request, 500);
                 }
@@ -68,7 +68,7 @@ class TokenController extends Controller
             $message = $result->message;
 
             if ($message == 'Token updated successfully.') {
-                return $this->respond(['token' => $newToken], $request, 200);
+                return $this->respond(['message' => $message,'token' => $newToken], $request, 200);
             } else {
                 return $this->respond(['error' => 'Something went wrong.'], $request, 500);
             }
@@ -121,8 +121,8 @@ class TokenController extends Controller
 
             // Check if the token exists in the database
             $isValid = DB::select('SELECT * FROM Get_Token WHERE token = ?', [$currentToken]);
-            if ($isValid[0] != null) {
-                return $this->respond(['valid' => $isValid], $request, 200);
+            if ($isValid[1] != null) {
+                return $this->respond(['message' => 'Token is valid.', 'token' => $isValid[1]], $request, 200);
             } else {
                 return $this->respond(['error' => 'Token not found.'], $request, 404);
             }

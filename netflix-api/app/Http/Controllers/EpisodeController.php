@@ -61,8 +61,11 @@ class EpisodeController extends Controller
 
             if ($message == 'Episode inserted successfully.') {
                 return $this->respond(['message' => $message], $request, 201);
-            } else {
+            } else if ($message == 'Failed to insert episode.') {
                 return $this->respond(['error' => $message], $request, 500);
+            }
+            else{
+                return $this->respond(['error' => $message], $request, 404);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e->getMessage()], $request, 500);
@@ -83,12 +86,12 @@ class EpisodeController extends Controller
             $result = DB::select('SELECT @message as message')[0];
             $message = $result->message;
 
-            if ($message == 'Episode not found.') {
+            if ($message == 'Episode not found.' || $message == 'Genre not found.' || $message == 'Series not found.') {
                 return $this->respond(['error' => $message], $request, 404);
-            } elseif ($message == 'Failed to update episode.') {
+            } elseif ($message == 'Failed to update episode. No changes made') {
                 return $this->respond(['error' => $message], $request, 500);
             } else {
-                return $this->respond(['message' => $message], $request, 400);
+                return $this->respond(['message' => $message], $request, 200);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e->getMessage()], $request, 500);

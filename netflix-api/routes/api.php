@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Routing\ViewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AnalyticsController,
     MainApiController,
@@ -10,7 +11,8 @@ use App\Http\Controllers\{AnalyticsController,
     TokenController,
     ExternalApiController,
     EpisodeController,
-    SeriesController};
+    SeriesController,
+    ViewingClassificationController};
 
 // API Routes
 Route::any('/api/{endpoint}', [MainApiController::class, 'routeRequest']);
@@ -73,10 +75,10 @@ Route::prefix('episode')->group(function () {
 //Series routes
 Route::prefix('series')->group(function () {
     Route::get('/', [SeriesController::class, 'listAllSeries']);         // List all series
-    Route::get('/{id}', [SeriesController::class, 'getSeriesById']);      // Show a specific series
+    Route::get('/{id}', [SeriesController::class, 'getSeriesById'])->whereNumber('id');      // Show a specific series
     Route::post('/', [SeriesController::class, 'createNewSeries']);        // Create a new series
-    Route::put('/{id}', [SeriesController::class, 'updateSeries']);    // Update an existing series
-    Route::delete('/{id}', [SeriesController::class, 'deleteSeries']);      // Delete a series
+    Route::put('/{id}', [SeriesController::class, 'updateSeries'])->whereNumber('id');    // Update an existing series
+    Route::delete('/{id}', [SeriesController::class, 'deleteSeries'])->whereNumber('id');      // Delete a series
 });
 
 //Analytics routes
@@ -85,4 +87,13 @@ Route::prefix('analytics')->group(function () {
     Route::get('/bottom-ten-watched/{category}', [AnalyticsController::class, 'bottomTen']);
     Route::get('/revenue', [AnalyticsController::class, 'getAllRevenue']);
     Route::get('/sort-all-by-views/{category}', [AnalyticsController::class, 'sortAllByViews']);
+});
+
+//ViewingClassification routes
+Route::prefix('classifications')->group(function () {
+    Route::get('/', [ViewingClassificationController::class, 'getAllClassifications']);         // List all classifications
+    Route::get('/{id}', [ViewingClassificationController::class, 'getClassificationById'])->whereNumber('id');      // Show a specific classification
+    Route::post('/', [ViewingClassificationController::class, 'addNewClassification']);        // Create a new classification
+    Route::put('/{id}', [ViewingClassificationController::class, 'updateClassification'])->whereNumber('id');    // Update an existing classification
+    Route::delete('/{id}', [ViewingClassificationController::class, 'deleteClassification'])->whereNumber('id');      // Delete a classification
 });

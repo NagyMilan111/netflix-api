@@ -320,3 +320,9 @@ SELECT
     profile_id
 FROM
     Profile_Watch_List;
+
+CREATE VIEW List_Classifications AS
+    SELECT
+    classification_id,
+    classification
+FROM Viewing_Classification;

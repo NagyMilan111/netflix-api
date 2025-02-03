@@ -23,7 +23,6 @@ class ProfileController extends Controller
 
             if ($message == 'Preferences updated successfully.') {
                 return $this->respond(['message' => 'Preferences updated successfully.'], $request, 200);
-
             } else if ($message == 'Failed to update preferences.') {
                 return $this->respond(['error' => 'Failed to update preferences.'], $request, 500);
             } else if ($message == 'Profile not found.') {
@@ -76,31 +75,27 @@ class ProfileController extends Controller
             $media_id = $request->input('media_id');
             $series_id = $request->input('series_id');
 
-            if ($validatedData['action'] == 'add') {
+            $action = $request->input('action');
+            $validActions = ['add', 'remove'];
+
+            if (in_array($action, $validActions)) {
                 // Add media to the watchlist
-                DB::select('CALL Insert_Into_Profile_Watch_List(?, ?, ?, @message)', [$id, $media_id, $series_id]);
+                DB::select('CALL Update_Profile_Watch_List(?, ?, ?, ?, @message)', [$id, $media_id, $series_id, $action]);
                 $result = DB::select('SELECT @message as message')[0];
                 $message = $result->message;
 
-                if ($message == 'Row inserted into Profile_Watch_List successfully.') {
-                    return $this->respond(['message' => 'Media added to watchlist.'], $request, 201);
-                } else {
-                    return $this->respond(['error' => 'Something went wrong.'], $request, 500);
-                }
-            } else {
-                // Remove media from the watchlist
-                DB::select('CALL Delete_From_Profile_Watch_List(?, ?, ?, @message)', [$id, $media_id, $series_id]);
-
-                $result = DB::select('SELECT @message as message')[0];
-                $message = $result->message;
-
-                if ($message == 'Row deleted from Profile_Watch_List successfully.') {
-                    return $this->respond([
-                        'message' => 'Media removed from watchlist.'
-                    ], $request, 200);
-                } else {
+                if ($message == 'Media added to watch list successfully.') {
+                    return $this->respond(['message' => $message], $request, 201);
+                } else if ($message == 'Media removed from watch list successfully.'){
+                    return $this->respond(['message' => $message], $request, 200);
+                } else if ($message == 'Media not found.' || $message == 'Profile not found.' || $message == 'Series not found.') {
                     return $this->respond(['error' => $message], $request, 404);
                 }
+                else {
+                    return $this->respond(['error' => 'An error occurred while updating the watch list'], $request, 500);
+                }
+            } else {
+                return $this->respond(['error' => 'Invalid action.'], $request, 400);
             }
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
