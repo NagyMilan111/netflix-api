@@ -6,9 +6,10 @@ echo Hash::make('examplePassword1');
 copy the hashcode
 
 update the SQL
-UPDATE Account 
-SET hashed_password = '<new_hash>'
-WHERE email = 'user1@example.com';
+
+UPDATE accounts 
+SET hashed_password = '"$2y$12$63dUZW3LT3mf/DLsZ.sWY.mdEeFvjtmFqqPct7HBOJl5WYqpO1UrK"'
+WHERE email = 'admin@example.com';
 
 then try to login.
 
