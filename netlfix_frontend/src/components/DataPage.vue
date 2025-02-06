@@ -50,20 +50,20 @@ export default {
           leastWatchedMoviesResponse,
           leastWatchedMediaResponse
         ] = await Promise.all([
-          axios.get('http://localhost:3000/api/analytics/revenue'),
-          axios.get('http://localhost:3000/api/analytics/discounted-users'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/watched/movies'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/watched/series'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/watched/medias'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/watched/genres'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/longest/series'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/shortest/series'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/longest/movies'),
-          axios.get('http://localhost:3000/api/analytics/top-ten/shortest/movies'),
-          axios.get('http://localhost:3000/api/analytics/bottom-ten/genres'),
-          axios.get('http://localhost:3000/api/analytics/bottom-ten/series'),
-          axios.get('http://localhost:3000/api/analytics/bottom-ten/movies'),
-          axios.get('http://localhost:3000/api/analytics/bottom-ten/medias')
+          axios.get('http://localhost:8000/api/analytics/revenue'),
+          axios.get('http://localhost:8000/api/analytics/discounted-users'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/watched/movies'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/watched/series'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/watched/medias'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/watched/genres'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/longest/series'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/shortest/series'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/longest/movies'),
+          axios.get('http://localhost:8000/api/analytics/top-ten/shortest/movies'),
+          axios.get('http://localhost:8000/api/analytics/bottom-ten/genres'),
+          axios.get('http://localhost:8000/api/analytics/bottom-ten/series'),
+          axios.get('http://localhost:8000/api/analytics/bottom-ten/movies'),
+          axios.get('http://localhost:8000/api/analytics/bottom-ten/medias')
         ]);
 
         // Map the responses to the dataColumns structure

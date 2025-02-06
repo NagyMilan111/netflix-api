@@ -24,10 +24,16 @@ abstract class Controller
             // Convert data to XML
             $dataArray = json_decode(json_encode($data), true); // Ensure data is an array
             $xml = ArrayToXml::convert($dataArray, 'root');
-            return response($xml, $status)->header('Content-Type', 'application/xml');
+            return response($xml, $status)->header('Content-Type', 'application/xml')
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         }
 
         // Default to JSON
-        return response()->json($data, $status);
+        return response()->json($data, $status)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     }
 }
