@@ -1,11 +1,3 @@
--- User creation
-
-CREATE USER 'senior'@'%' IDENTIFIED BY 'password';
-GRANT SHUTDOWN, CREATE USER, RELOAD ON *.* TO 'senior'@'%';
-GRANT CREATE ROUTINE, CREATE, SELECT, EXECUTE, DELETE, CREATE VIEW, ALTER ROUTINE, INDEX, EVENT,
-    INSERT, LOCK TABLES, SHOW VIEW, TRIGGER, UPDATE, ALTER, GRANT OPTION
-    ON Netflix.* TO 'senior'@'%';
-GRANT SELECT ON mysql.proc TO 'senior'@'%';
 
 
 CREATE USER 'medior'@'%' IDENTIFIED BY 'password';
@@ -167,6 +159,10 @@ GRANT SELECT, SHOW VIEW, ALTER ON `List_Classifications` TO 'junior'@'%';
 
 CREATE USER 'api'@'%' IDENTIFIED BY 'password';
 
+GRANT SELECT, UPDATE, INSERT, DELETE ON Netflix.cache TO 'api'@'%';
+GRANT SELECT, UPDATE, INSERT, DELETE ON Netflix.cache_locks TO 'api'@'%';
+
+
 GRANT EXECUTE ON PROCEDURE Add_Media TO 'api'@'%';
 GRANT EXECUTE ON PROCEDURE Add_Profile TO 'api'@'%';
 GRANT EXECUTE ON PROCEDURE Add_Watchlist TO 'api'@'%';
@@ -259,6 +255,7 @@ ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_All_Revenue` AS select sum(case w
 ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_Top_Ten_Watched_Movies` AS select `Netflix`.`Media`.`title` AS `MovieTitle`,count(`Netflix`.`Profile_Watched_Media`.`profile_id`) AS `TimesWatched` from (`Netflix`.`Media` join `Netflix`.`Profile_Watched_Media` on(`Netflix`.`Media`.`media_id` = `Netflix`.`Profile_Watched_Media`.`media_id`)) where `Netflix`.`Media`.`series_id` is null group by `Netflix`.`Media`.`media_id`,`Netflix`.`Media`.`title` order by count(`Netflix`.`Profile_Watched_Media`.`profile_id`) desc;
 ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_Watched_Media_By_Views` AS select `Netflix`.`Media`.`title` AS `MediaTitle`,count(`Netflix`.`Profile_Watched_Media`.`profile_id`) AS `TimesWatched` from (`Netflix`.`Media` join `Netflix`.`Profile_Watched_Media` on(`Netflix`.`Media`.`media_id` = `Netflix`.`Profile_Watched_Media`.`media_id`)) group by `Netflix`.`Media`.`media_id`,`Netflix`.`Media`.`title` order by count(`Netflix`.`Profile_Watched_Media`.`profile_id`) desc;
 ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_Token` AS select `Netflix`.`Tokens`.`account_id` AS `account_id`,`Netflix`.`Tokens`.`token` AS `token` from `Netflix`.`Tokens`;
+
 
 
 DROP USER IF EXISTS 'root'@'localhost';

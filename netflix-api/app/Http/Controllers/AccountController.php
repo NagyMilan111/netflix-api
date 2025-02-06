@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AccountController extends Controller
 {
@@ -28,8 +29,26 @@ class AccountController extends Controller
             if ($validator->fails()) {
                 return $this->respond(['error' => $validator->errors()], $request, 400);
             }
+
             $email = $request->input('email');
             $password = $request->input('password');
+            $key = 'login_attempts_' . $email;
+
+            if (RateLimiter::tooManyAttempts($key, 3)) {
+                DB::select('CALL Block_User(?, @message)', [$email]);
+                $result = DB::select('SELECT @message AS message')[0];
+                $message = $result->message;
+
+                if ($message == 'User successfully blocked.') {
+                    return $this->respond(['error' => 'Too many login attempts. Please reset your password.'], $request, 429);
+                }
+                else if ($message == 'User not found.') {
+                    return $this->respond(['error' => 'User not found.'], $request, 404);
+                }
+                else{
+                    return $this->respond(['error' => $message], $request, 500);
+                }
+            }
 
             DB::select('CALL User_Login(?, @message, @account_id, @hashed_password)', [$email]);
 
@@ -45,6 +64,7 @@ class AccountController extends Controller
                 return $this->respond(['error' => $message], $request, 401);
             } else if ($message == 'Authentication required.') {
                 if (!Hash::check($password, $hashed_password)) {
+                    RateLimiter::hit($key, 300);
                     return $this->respond(['error' => 'Incorrect password.'], $request, 401);
                 } else {
 
@@ -208,8 +228,7 @@ class AccountController extends Controller
                 return $this->respond(['message' => $message], $request, 200);
             } else if ($message == 'User not found.') {
                 return $this->respond(['error' => $message], $request, 404);
-            }
-            else{
+            } else {
                 return $this->respond(['error' => $message], $request, 400);
             }
 
@@ -270,10 +289,9 @@ class AccountController extends Controller
 
             if ($message == 'Profile added successfully.') {
                 return $this->respond(['message' => 'Profile added successfully.'], $request, 201);
-            } else if ($message == 'Account not found.'){
+            } else if ($message == 'Account not found.') {
                 return $this->respond(['message' => $message], $request, 404);
-            }
-            else {
+            } else {
                 return $this->respond(['error' => $message], $request, 400);
             }
         } catch (\Exception $e) {
@@ -283,7 +301,7 @@ class AccountController extends Controller
 
     public function deleteAccount(Request $request, $id)
     {
-        try{
+        try {
 
             DB::select('CALL Remove_Account(?, @message)', [$id]);
 
@@ -292,13 +310,11 @@ class AccountController extends Controller
 
             if ($message == 'Account removed successfully.') {
                 return $this->respond(['message' => $message], $request, 200);
-            }
-            else{
+            } else {
                 return $this->respond(['message' => $message], $request, 404);
             }
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
         }
     }
