@@ -1,6 +1,6 @@
 DELIMITER //
 
-CREATE PROCEDURE Add_Media(
+CREATE DEFINER=`senior`@`%` PROCEDURE Add_Media(
     IN p_title VARCHAR(255),
     IN p_duration TIME,
     IN p_series_id INT,
@@ -42,7 +42,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Add_Profile(
+CREATE DEFINER=`senior`@`%` PROCEDURE Add_Profile(
     IN p_account_id INT,
     IN p_profile_name VARCHAR(255),
     IN p_profile_image VARCHAR(255),
@@ -94,10 +94,10 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Add_Watchlist(
+CREATE DEFINER=`senior`@`%` PROCEDURE Add_Watchlist(
     IN p_profile_id INT,
-    IN media_id INT,
-    IN series_id INT,
+    IN input_media_id INT,
+    IN input_series_id INT,
     OUT result_message VARCHAR(255)
 )
 BEGIN
@@ -107,8 +107,8 @@ BEGIN
     INTO watchlist_exists
     FROM Profile_Watch_List
     WHERE profile_id = p_profile_id
-      AND media_id = media_id
-      AND series_id = series_id;
+      AND media_id = input_media_id
+      AND series_id = input_series_id;
 
     IF watchlist_exists > 0 THEN
         SET result_message = 'Watchlist already exists for this profile.';
@@ -121,7 +121,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Apply_Discount(
+CREATE DEFINER=`senior`@`%` PROCEDURE Apply_Discount(
     IN inviter_account_id INT,
     IN invitee_account_id INT,
     OUT result_message VARCHAR(255)
@@ -170,7 +170,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Block_User(
+CREATE DEFINER=`senior`@`%` PROCEDURE Block_User(
     IN user_email VARCHAR(255),
     OUT result_message VARCHAR(255)
 )
@@ -202,7 +202,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_Media(
+CREATE DEFINER=`senior`@`%` PROCEDURE Remove_Media(
     IN p_media_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -227,7 +227,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_Profile(
+CREATE DEFINER=`senior`@`%` PROCEDURE Remove_Profile(
     IN p_profile_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -252,7 +252,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_Account(
+CREATE DEFINER=`senior`@`%` PROCEDURE Remove_Account(
     IN user_account_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -282,7 +282,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Remove_Watchlist(
+CREATE DEFINER=`senior`@`%` PROCEDURE Remove_Watchlist(
     IN p_profile_id INT,
     IN p_media_id INT,
     IN p_series_id INT,
@@ -313,7 +313,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Currently_Watched(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Currently_Watched(
     IN p_profile_id INT,
     IN p_media_id INT,
     IN p_subtitle_id INT,
@@ -354,7 +354,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Profile_Genre(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Profile_Genre(
     IN p_profile_id INT,
     IN p_genre_id INT,
     OUT result_message VARCHAR(255)
@@ -388,7 +388,7 @@ END //
 
 DELIMITER //
 
-CREATE PROCEDURE User_Login(
+CREATE DEFINER=`senior`@`%` PROCEDURE User_Login(
     IN user_email VARCHAR(255),
     OUT result_message VARCHAR(255),
     OUT result_account_id INT,
@@ -429,7 +429,7 @@ DELIMITER ;
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE Get_Media(
+CREATE DEFINER=`senior`@`%` PROCEDURE Get_Media(
     IN p_media_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -453,7 +453,7 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE Get_Profile(
+CREATE DEFINER=`senior`@`%` PROCEDURE Get_Profile(
     IN p_profile_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -478,7 +478,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE PROCEDURE Register_User(
+CREATE DEFINER=`senior`@`%` PROCEDURE Register_User(
     IN user_email VARCHAR(255),
     IN user_password VARCHAR(255),
     IN p_subscription_id INT,
@@ -514,7 +514,7 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE Update_Password(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Password(
     IN user_email VARCHAR(255),
     IN new_password VARCHAR(255),
     OUT result_message VARCHAR(255)
@@ -541,7 +541,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Pause_Spot(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Pause_Spot(
     IN input_profile_id INT,
     IN input_media_id INT,
     IN input_pause_spot VARCHAR(255),
@@ -598,7 +598,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Fetch_Pause_Spot(
+CREATE DEFINER=`senior`@`%` PROCEDURE Fetch_Pause_Spot(
     IN input_profile_id INT,
     IN input_media_id INT,
     OUT output_message VARCHAR(255),
@@ -658,7 +658,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Log_Play_Action(
+CREATE DEFINER=`senior`@`%` PROCEDURE Log_Play_Action(
     IN input_profile_id INT,
     IN input_media_id INT,
     OUT output_message VARCHAR(255),
@@ -706,7 +706,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Profile_Preferences(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Profile_Preferences(
     IN input_profile_id INT,
     IN input_profile_movies_preferred BOOLEAN,
     OUT output_message VARCHAR(255)
@@ -752,7 +752,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Account_Subscription(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Account_Subscription(
     IN input_account_id INT,
     IN input_subscription_id INT,
     OUT result_message VARCHAR(255)
@@ -808,7 +808,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Insert_Token(
+CREATE DEFINER=`senior`@`%` PROCEDURE Insert_Token(
     IN input_account_id INT,
     IN input_token VARCHAR(255),
     OUT result_message VARCHAR(255)
@@ -833,7 +833,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Delete_Token(
+CREATE DEFINER=`senior`@`%` PROCEDURE Delete_Token(
     IN input_token VARCHAR(255),
     OUT result_message VARCHAR(255)
 )
@@ -860,7 +860,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Token(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Token(
     IN old_token VARCHAR(255),
     IN new_token VARCHAR(255),
     OUT result_message VARCHAR(255)
@@ -887,7 +887,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Profile_Watch_List(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Profile_Watch_List(
     IN input_profile_id INT,
     IN input_media_id INT,
     IN input_series_id INT,
@@ -967,7 +967,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Delete_From_Profile_Watch_List(
+CREATE DEFINER=`senior`@`%` PROCEDURE Delete_From_Profile_Watch_List(
     IN input_profile_id INT,
     IN input_media_id INT,
     IN input_series_id INT,
@@ -996,7 +996,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Insert_Series(
+CREATE DEFINER=`senior`@`%` PROCEDURE Insert_Series(
     IN input_title VARCHAR(255),
     IN input_genre_id INT,
     IN input_number_of_seasons INT,
@@ -1035,7 +1035,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Series(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Series(
     IN input_id INT,
     IN input_title VARCHAR(255),
     IN input_genre_id INT,
@@ -1079,7 +1079,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Delete_Series(
+CREATE DEFINER=`senior`@`%` PROCEDURE Delete_Series(
     IN input_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -1119,7 +1119,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Insert_Episode(
+CREATE DEFINER=`senior`@`%` PROCEDURE Insert_Episode(
     IN input_title VARCHAR(255),
     IN input_duration TIME,
     IN input_series_id INT,
@@ -1169,7 +1169,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Episode(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Episode(
     IN input_id INT,
     IN input_title VARCHAR(255),
     IN input_duration TIME,
@@ -1240,7 +1240,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Delete_Episode(
+CREATE DEFINER=`senior`@`%` PROCEDURE Delete_Episode(
     IN input_id INT,
     OUT result_message VARCHAR(255)
 )
@@ -1279,7 +1279,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Profile_Viewing_Classification(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Profile_Viewing_Classification(
     IN input_profile_id INT,
     IN input_classification_id INT,
     IN input_action VARCHAR(255),
@@ -1343,7 +1343,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Insert_Classification(
+CREATE DEFINER=`senior`@`%` PROCEDURE Insert_Classification(
     IN input_classification VARCHAR(255),
     OUT result_message VARCHAR(255)
 )
@@ -1367,7 +1367,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Update_Classification(
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Classification(
     IN input_id INT,
     IN input_classification INT,
     OUT result_message VARCHAR(255)
@@ -1404,7 +1404,7 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE PROCEDURE Delete_Classification(
+CREATE DEFINER=`senior`@`%` PROCEDURE Delete_Classification(
     IN input_id INT,
     OUT result_message VARCHAR(255)
 )

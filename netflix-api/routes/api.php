@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Routing\ViewController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{AnalyticsController,
     MainApiController,

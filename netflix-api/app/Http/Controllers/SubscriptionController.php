@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
 
 class SubscriptionController extends Controller
 {
@@ -32,6 +34,16 @@ class SubscriptionController extends Controller
     public function updateSubscription(Request $request)
     {
         try {
+
+            $validator = Validator::make($request->all(), [
+                'account_id' => 'required|integer|min:1',
+                'subscription_id' => 'required|integer|min:1',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $account_id = $request->input('account_id');
             $subscription_id = $request->input('subscription_id');
             DB::select('CALL Update_Account_Subscription(?, ?, @message)', [$account_id, $subscription_id]);
