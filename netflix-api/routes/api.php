@@ -46,7 +46,7 @@ Route::prefix('profile')->group(function () {
 
 // Subscription Routes
 Route::prefix('subscription')->group(function () {
-    Route::get('/details/{id}}', [SubscriptionController::class, 'getSubscriptionDetails'])->whereNumber('id');
+    Route::get('/details/{id}', [SubscriptionController::class, 'getSubscriptionDetails'])->whereNumber('id');
     Route::put('/update', [SubscriptionController::class, 'updateSubscription']);
 });
 

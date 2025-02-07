@@ -65,25 +65,28 @@ class ViewingClassificationController extends Controller
 
     // Update an existing classification
     public function updateClassification(Request $request, $id)
-    {
-        try {
-            $classification = $request->input('classification');
+{
+    try {
+        $classification = $request->input('classification');
 
-            DB::select('CALL Update_Classification(?, ?, @message)', [$id, $classification]);
-            $result = DB::select('SELECT @message as message')[0];
-            $message = $result->message;
+        // Ensure the value is properly quoted for SQL
+        DB::select('CALL Update_Classification(?, ?, @message)', [$id, (string) $classification]);
+        
+        $result = DB::select('SELECT @message as message')[0];
+        $message = $result->message;
 
-            if ($message == 'Classification not found.') {
-                return $this->respond(['error' => $message], $request, 404);
-            } elseif ($message == 'Failed to update classification. No changes made.') {
-                return $this->respond(['error' => $message], $request, 500);
-            } else {
-                return $this->respond(['message' => $message], $request, 200);
-            }
-        } catch (\Exception $e) {
-            return $this->respond(['error' => $e->getMessage()], $request, 500);
+        if ($message == 'Classification not found.') {
+            return $this->respond(['error' => $message], $request, 404);
+        } elseif ($message == 'Failed to update classification. No changes made.') {
+            return $this->respond(['error' => $message], $request, 500);
+        } else {
+            return $this->respond(['message' => $message], $request, 200);
         }
+    } catch (\Exception $e) {
+        return $this->respond(['error' => $e->getMessage()], $request, 500);
     }
+}
+
 
     // Delete an episode
     public function deleteClassification($id, Request $request)

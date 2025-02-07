@@ -114,20 +114,26 @@ class TokenController extends Controller
     {
         try {
             $currentToken = $request->bearerToken();
-
+    
             if (!$currentToken) {
-                return $this->respond(['error' => 'No token provided'], $request, 400);
+                return $this->respond(['error' => 'No token provided.'], $request, 400);
             }
-
-            // Check if the token exists in the database
-            $isValid = DB::select('SELECT * FROM Get_Token WHERE token = ?', [$currentToken]);
-            if ($isValid[1] != null) {
-                return $this->respond(['message' => 'Token is valid.', 'token' => $isValid[1]], $request, 200);
+    
+            // Fetch token from the correct table "Tokens"
+            $isValid = DB::select('SELECT * FROM Tokens WHERE token = ?', [$currentToken]);
+    
+            if (!empty($isValid)) {
+                return $this->respond([
+                    'message' => 'Token is valid.',
+                    'account_id' => $isValid[0]->account_id,
+                    'token' => $isValid[0]->token
+                ], $request, 200);
             } else {
                 return $this->respond(['error' => 'Token not found.'], $request, 404);
             }
         } catch (\Exception $e) {
-            return $this->respond(['error' => $e], $request, 500);
+            \Log::error('Token validation error: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal server error', 'details' => $e->getMessage()], 500);
         }
     }
-}
+}    
