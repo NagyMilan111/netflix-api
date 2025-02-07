@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ViewingClassificationController extends Controller
 {
@@ -43,9 +44,14 @@ class ViewingClassificationController extends Controller
     public function addNewClassification(Request $request)
     {
         try {
-            $request->validate([
+
+            $validator = Validator::make($request->all(), [
                 'classification' => 'required|string|max:255',
             ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
             $classification = $request->input('classification');
 
@@ -67,6 +73,15 @@ class ViewingClassificationController extends Controller
     public function updateClassification(Request $request, $id)
     {
         try {
+
+            $validator = Validator::make($request->all(), [
+                'classification' => 'required|string|max:255',
+            ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $classification = $request->input('classification');
 
             DB::select('CALL Update_Classification(?, ?, @message)', [$id, $classification]);

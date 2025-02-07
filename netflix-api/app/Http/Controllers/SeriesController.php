@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Series;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -44,10 +44,16 @@ class SeriesController extends Controller
     public function createNewSeries(Request $request)
     {
         try {
-            $request->validate([
+
+            $validator = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
                 'number_of_seasons' => 'required|integer|min:1',
+                'genre_id' => 'required|integer|min:1',
             ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
             $title = $request->input('title');
             $number_of_seasons = $request->input('number_of_seasons');
@@ -78,10 +84,16 @@ class SeriesController extends Controller
     {
 
         try {
-            $request->validate([
-                'title' => 'sometimes|required|string|max:255',
-                'number_of_seasons' => 'sometimes|required|integer|min:1',
+
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'number_of_seasons' => 'required|integer|min:1',
+                'genre_id' => 'required|integer|min:1',
             ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
             $title = $request->input('title');
             $number_of_seasons = $request->input('number_of_seasons');

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Episode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
 
 class EpisodeController extends Controller
 {
@@ -27,6 +28,7 @@ class EpisodeController extends Controller
     // Show a specific episode
     public function getEpisodeById($id, Request $request)
     {
+
         try {
             $result = DB::select('SELECT * FROM List_Episodes WHERE media_id = ?', [$id]);
 
@@ -44,10 +46,17 @@ class EpisodeController extends Controller
     public function addNewEpisode(Request $request)
     {
         try {
-            $request->validate([
+            $validator = Validator::make($request->all(), [
                 'title' => 'required|string|max:255',
-                'season' => 'required|integer',
+                'season' => 'required|integer|min:1',
+                'genre_id' => 'required|integer|min:1',
+                'series_id' => 'required|integer|min:1',
+                'duration' => 'required|integer|min:1',
             ]);
+
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
             $title = $request->input('title');
             $duration = $request->input('duration');
@@ -76,6 +85,20 @@ class EpisodeController extends Controller
     public function updateEpisode(Request $request, $id)
     {
         try {
+
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'season' => 'required|integer|min:1',
+                'genre_id' => 'required|integer|min:1',
+                'series_id' => 'required|integer|min:1',
+                'duration' => 'required|integer|min:1',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
+
             $title = $request->input('title');
             $duration = $request->input('duration');
             $season = $request->input('season');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
@@ -15,6 +16,15 @@ class ProfileController extends Controller
     public function updatePreferences(Request $request, $id)
     {
         try {
+
+            $validator = Validator::make($request->all(), [
+                'movies_preferred' => 'required|integer|'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $movies_preferred = $request->input('movies_preferred');
 
             DB::select('CALL Update_Profile_Preferences(?, ?, @message)', [$id, $movies_preferred]);
@@ -68,9 +78,14 @@ class ProfileController extends Controller
     {
         try {
             // Validate input
-            $validatedData = $request->validate([
-                'action' => 'required|in:add,remove',
+            $validator = Validator::make($request->all(), [
+                'media_id' => 'required|integer|min:1',
+                'series_id' => 'required|integer|min:1',
             ]);
+
+            if($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
             $media_id = $request->input('media_id');
             $series_id = $request->input('series_id');
@@ -105,6 +120,14 @@ class ProfileController extends Controller
     public function updateViewClassifications(Request $request, $id)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'classification_id' => 'required|integer|min:1',
+            ]);
+
+            if($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $classificationId = $request->input('classification_id');
             $action = $request->input('action');
             $validActions = ['add', 'remove'];
