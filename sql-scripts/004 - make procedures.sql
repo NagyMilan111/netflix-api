@@ -1484,3 +1484,25 @@ BEGIN
 END //
 
 DELIMITER ;
+
+DELIMITER //
+
+CREATE DEFINER=`senior`@`%` PROCEDURE Revoke_Api_Key(
+    IN input_api_key varchar(255),
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE rows_affected INT;
+
+    DELETE FROM Api_Keys WHERE api_key = input_api_key;
+
+    SET rows_affected = ROW_COUNT();
+    IF rows_affected > 0 THEN
+        SET result_message = 'Api key revoked successfully.';
+    ELSE
+        SET result_message = 'Something went wrong.';
+    END IF;
+
+END //
+
+DELIMITER ;

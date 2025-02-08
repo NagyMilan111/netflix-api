@@ -101,5 +101,6 @@ Route::prefix('classifications')->middleware(ApiKeyMiddleware::class)->group(fun
 
 Route::prefix('keys')->group(function () {
     Route::post('/generate', [ApiKeyController::class, 'generate']);
-    Route::put('/refresh', [ApiKeyController::class, 'refresh'])->middleware(ApiKeyMiddleware::class);;
+    Route::put('/refresh', [ApiKeyController::class, 'refresh'])->middleware(ApiKeyMiddleware::class);
+    Route::delete('/revoke', [ApiKeyController::class, 'revoke'])->middleware(ApiKeyMiddleware::class);
 });

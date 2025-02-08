@@ -36,28 +36,36 @@ class ApiKeyController extends Controller
 
             $header = $request->header('Netflix-Api-Key');
 
-            $apiKeyExists = DB::select('SELECT * FROM Get_Api_Key WHERE api_key = ?', [$header]);
+            $api_key = str::random(64);
 
-            if (!$apiKeyExists) {
-                return $this->respond(['error' => 'Invalid Api key.'], $request, 401);
+            DB::select('CALL Update_Api_Key(?, ?, @message)', [$header, $api_key]);
+            $result = DB::select('SELECT @message as message')[0];
+
+            $message = $result->message;
+
+            if ($message == 'Api key updated successfully.') {
+                return $this->respond(['api_key' => $api_key, 'message' => $message], $request, 200);
             } else {
-
-                $api_key = str::random(64);
-
-                DB::select('CALL Update_Api_Key(?, ?, @message)', [$header, $api_key]);
-                $result = DB::select('SELECT @message as message')[0];
-
-                $message = $result->message;
-
-                if ($message == 'Api key updated successfully.') {
-                    return $this->respond(['api_key' => $api_key, 'message' => $message], $request, 200);
-                } else {
-                    return $this->respond(['error' => $message], $request, 500);
-                }
+                return $this->respond(['error' => $message], $request, 500);
             }
 
         } catch (\Exception $e) {
             return $this->respond(['error' => $e], $request, 500);
+        }
+    }
+
+    public function revoke(Request $request)
+    {
+        $header = $request->header('Netflix-Api-Key');
+
+        DB::select('CALL Revoke_Api_Key(?, @message)', [$header]);
+
+        $result = DB::select('SELECT @message as message')[0];
+        $message = $result->message;
+        if ($message == 'Api key revoked successfully.') {
+            return $this->respond(['message' => $message], $request, 200);
+        } else {
+            return $this->respond(['error' => $message], $request, 500);
         }
     }
 

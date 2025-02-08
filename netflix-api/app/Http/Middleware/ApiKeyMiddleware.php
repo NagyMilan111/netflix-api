@@ -20,7 +20,6 @@ class ApiKeyMiddleware extends Middleware
             return $this->respond(['error' => 'Invalid Api key.'], $request, 401);
         } else {
 
-
             if (Carbon::now()->greaterThan($apiKeyExists[0]->expire_at)) {
                 return response()->json(['error' => 'API key expired.'], 401);
             }
