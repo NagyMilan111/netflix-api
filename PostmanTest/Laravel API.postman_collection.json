@@ -18,6 +18,11 @@
 								"key": "Accept",
 								"value": "application/xml",
 								"type": "text"
+							},
+							{
+								"key": "Netflix-Api-Key",
+								"value": "xhkbLFKp8aJhtW2OOnTs8PfGSph2pwIrVfHrPlBG4PT2g83mpQUJxdNO6NLNYHnf",
+								"type": "text"
 							}
 						],
 						"body": {
@@ -55,6 +60,11 @@
 									{
 										"key": "Accept",
 										"value": "application/xml",
+										"type": "text"
+									},
+									{
+										"key": "Netflix-Api-Key",
+										"value": "xhkbLFKp8aJhtW2OOnTs8PfGSph2pwIrVfHrPlBG4PT2g83mpQUJxdNO6NLNYHnf",
 										"type": "text"
 									}
 								],
@@ -400,6 +410,58 @@
 							],
 							"cookie": [],
 							"body": "{\r\n    \"error\": \"User not found.\"\r\n}"
+						},
+						{
+							"name": "LoginTooManyAttempts",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/xml",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"test@example.com\",\r\n  \"password\": \"newPassword123\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/account/login",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"account",
+										"login"
+									]
+								}
+							},
+							"status": "Too Many Requests",
+							"code": 429,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"error\": \"Too many login attempts. Please reset your password.\"\r\n}"
 						}
 					]
 				},
@@ -1446,7 +1508,7 @@
 							}
 						},
 						"url": {
-							"raw": "http://127.0.0.1:8000/api/media/1/play",
+							"raw": "http://127.0.0.1:8000/api/media/{$id}/play",
 							"protocol": "http",
 							"host": [
 								"127",
@@ -1458,7 +1520,7 @@
 							"path": [
 								"api",
 								"media",
-								"1",
+								"{$id}",
 								"play"
 							]
 						}
@@ -4070,7 +4132,6 @@
 								{
 									"key": "Content-Type",
 									"value": "application/json",
-									"name": "Content-Type",
 									"description": "",
 									"type": "text"
 								}
@@ -4114,7 +4175,6 @@
 								{
 									"key": "Content-Type",
 									"value": "application/json",
-									"name": "Content-Type",
 									"description": "",
 									"type": "text"
 								}
@@ -4158,7 +4218,6 @@
 								{
 									"key": "Content-Type",
 									"value": "application/json",
-									"name": "Content-Type",
 									"description": "",
 									"type": "text"
 								}
@@ -4929,7 +4988,6 @@
 								{
 									"key": "Content-Type",
 									"value": "application/json",
-									"name": "Content-Type",
 									"description": "",
 									"type": "text"
 								}
@@ -4982,7 +5040,6 @@
 								{
 									"key": "Content-Type",
 									"value": "application/json",
-									"name": "Content-Type",
 									"description": "",
 									"type": "text"
 								}
@@ -6666,6 +6723,12 @@
 									{
 										"key": "Accept",
 										"value": "application/xml",
+										"type": "text",
+										"disabled": true
+									},
+									{
+										"key": "Netflix-Api-Key",
+										"value": "xhkbLFKp8aJhtW2OOnTs8PfGSph2pwIrVfHrPlBG4PT2g83mpQUJxdNO6NLNYHnf",
 										"type": "text",
 										"disabled": true
 									}
@@ -8420,7 +8483,6 @@
 								{
 									"key": "Content-Type",
 									"value": "application/json",
-									"name": "Content-Type",
 									"description": "",
 									"type": "text"
 								}
@@ -8473,7 +8535,6 @@
 								{
 									"key": "Content-Type",
 									"value": "application/json",
-									"name": "Content-Type",
 									"description": "",
 									"type": "text"
 								}
@@ -8484,6 +8545,292 @@
 					]
 				}
 			]
+		},
+		{
+			"name": "ApiKeyController",
+			"item": [
+				{
+					"name": "Generate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/xml",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/keys/generate",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"keys",
+								"generate"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "GenerateSuccess",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/xml",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/keys/generate",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"keys",
+										"generate"
+									]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"api_key\": \"578347hhhufhhdy3y32oldewdh2ud2h3y3u2gdy4gdbh32\",\r\n    \"message\": \"Api key inserted successfully.\"\r\n}"
+						},
+						{
+							"name": "GenerateFailure",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/xml",
+										"type": "text",
+										"disabled": true
+									}
+								],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/keys/generate",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"keys",
+										"generate"
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"error\": \"Something went wrong.\"\r\n}"
+						}
+					]
+				},
+				{
+					"name": "Refresh",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/xml",
+								"type": "text",
+								"disabled": true
+							},
+							{
+								"key": "Netflix-Api-Key",
+								"value": "xhkbLFKp8aJhtW2OOnTs8PfGSph2pwIrVfHrPlBG4PT2g83mpQUJxdNO6NLNYHnf",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/keys/refresh",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"keys",
+								"refresh"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "RefreshFailure",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/xml",
+										"type": "text",
+										"disabled": true
+									},
+									{
+										"key": "Netflix-Api-Key",
+										"value": "xhkbLFKp8aJhtW2OOnTs8PfGSph2pwIrVfHrPlBG4PT2g83mpQUJxdNO6NLNYHnf",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/keys/refresh",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"keys",
+										"refresh"
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"error\": \"Something went wrong.\"\r\n}"
+						},
+						{
+							"name": "RefreshSuccess",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/xml",
+										"type": "text",
+										"disabled": true
+									},
+									{
+										"key": "Netflix-Api-Key",
+										"value": "xhkbLFKp8aJhtW2OOnTs8PfGSph2pwIrVfHrPlBG4PT2g83mpQUJxdNO6NLNYHnf",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "http://127.0.0.1:8000/api/keys/refresh",
+									"protocol": "http",
+									"host": [
+										"127",
+										"0",
+										"0",
+										"1"
+									],
+									"port": "8000",
+									"path": [
+										"api",
+										"keys",
+										"refresh"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json",
+									"name": "Content-Type",
+									"description": "",
+									"type": "text"
+								}
+							],
+							"cookie": [],
+							"body": "{\r\n    \"api_key\": \"fdsuhfh4y7432727gyddh7219sjf4u942hd\",\r\n    \"message\": \"Api key updated successfully.\"\r\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"//change 'xml' to 'json' if you would like to receive responses in a json format\r",
+					"\r",
+					"pm.request.headers.add({key: 'Accept', value: 'application/xml' })\r",
+					"\r",
+					"pm.request.headers.add({key: 'Netflix-Api-Key', value: 'xhkbLFKp8aJhtW2OOnTs8PfGSph2pwIrVfHrPlBG4PT2g83mpQUJxdNO6NLNYHnf' })"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
 		}
 	]
 }

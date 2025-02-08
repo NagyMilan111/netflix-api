@@ -326,3 +326,9 @@ CREATE VIEW List_Classifications AS
     classification_id,
     classification
 FROM Viewing_Classification;
+
+CREATE VIEW Get_Api_Key AS
+    SELECT
+    api_key,
+    expire_at
+FROM Api_Keys;

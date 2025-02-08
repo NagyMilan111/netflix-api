@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ViewingClassificationController extends Controller
 {
@@ -43,9 +44,14 @@ class ViewingClassificationController extends Controller
     public function addNewClassification(Request $request)
     {
         try {
-            $request->validate([
+
+            $validator = Validator::make($request->all(), [
                 'classification' => 'required|string|max:255',
             ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
             $classification = $request->input('classification');
 
@@ -67,23 +73,35 @@ class ViewingClassificationController extends Controller
     public function updateClassification(Request $request, $id)
     {
         try {
+
+            $validator = Validator::make($request->all(), [
+                'classification' => 'required|string|max:255',
+            ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $classification = $request->input('classification');
 
-            DB::select('CALL Update_Classification(?, ?, @message)', [$id, $classification]);
-            $result = DB::select('SELECT @message as message')[0];
-            $message = $result->message;
+        // Ensure the value is properly quoted for SQL
+        DB::select('CALL Update_Classification(?, ?, @message)', [$id, (string) $classification]);
+        
+        $result = DB::select('SELECT @message as message')[0];
+        $message = $result->message;
 
-            if ($message == 'Classification not found.') {
-                return $this->respond(['error' => $message], $request, 404);
-            } elseif ($message == 'Failed to update classification. No changes made.') {
-                return $this->respond(['error' => $message], $request, 500);
-            } else {
-                return $this->respond(['message' => $message], $request, 200);
-            }
-        } catch (\Exception $e) {
-            return $this->respond(['error' => $e->getMessage()], $request, 500);
+        if ($message == 'Classification not found.') {
+            return $this->respond(['error' => $message], $request, 404);
+        } elseif ($message == 'Failed to update classification. No changes made.') {
+            return $this->respond(['error' => $message], $request, 500);
+        } else {
+            return $this->respond(['message' => $message], $request, 200);
         }
+    } catch (\Exception $e) {
+        return $this->respond(['error' => $e->getMessage()], $request, 500);
     }
+}
+
 
     // Delete an episode
     public function deleteClassification($id, Request $request)

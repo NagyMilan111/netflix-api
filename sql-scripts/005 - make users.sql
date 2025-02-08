@@ -55,6 +55,9 @@ GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Update_Profile_Viewing_Classification 
 GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Insert_Classification TO 'medior'@'%';
 GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Update_Classification TO 'medior'@'%';
 GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Delete_Classification TO 'medior'@'%';
+GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Insert_Api_Key TO 'medior'@'%';
+GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Update_Api_Key TO 'medior'@'%';
+
 
 GRANT SELECT, SHOW VIEW, ALTER ON `Get_All_Revenue` TO 'medior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `Get_All_Genres_By_Views` TO 'medior'@'%';
@@ -82,6 +85,7 @@ GRANT SELECT, SHOW VIEW, ALTER ON `List_Episodes` TO 'medior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `Get_Profile_Id` TO 'medior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `List_Watch_List` TO 'medior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `List_Classifications` TO 'medior'@'%';
+GRANT SELECT, SHOW VIEW, ALTER ON `Get_Api_Key` TO 'medior'@'%';
 
 
 CREATE USER 'junior'@'%' IDENTIFIED BY 'password';
@@ -133,6 +137,8 @@ GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Update_Profile_Viewing_Classification 
 GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Insert_Classification TO 'junior'@'%';
 GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Update_Classification TO 'junior'@'%';
 GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Delete_Classification TO 'junior'@'%';
+GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Insert_Api_Key TO 'junior'@'%';
+GRANT EXECUTE, ALTER ROUTINE ON PROCEDURE Update_Api_Key TO 'junior'@'%';
 
 GRANT SELECT, SHOW VIEW, ALTER ON `Get_All_Genres_By_Views` TO 'junior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `Get_Watched_Media_By_Views` TO 'junior'@'%';
@@ -156,6 +162,8 @@ GRANT SELECT, SHOW VIEW, ALTER ON `List_Episodes` TO 'junior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `Get_Profile_Id` TO 'junior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `List_Watch_List` TO 'junior'@'%';
 GRANT SELECT, SHOW VIEW, ALTER ON `List_Classifications` TO 'junior'@'%';
+GRANT SELECT, SHOW VIEW, ALTER ON `Get_Api_Key` TO 'junior'@'%';
+
 
 CREATE USER 'api'@'%' IDENTIFIED BY 'password';
 
@@ -199,6 +207,8 @@ GRANT EXECUTE ON PROCEDURE Update_Profile_Viewing_Classification TO 'api'@'%';
 GRANT EXECUTE ON PROCEDURE Insert_Classification TO 'api'@'%';
 GRANT EXECUTE ON PROCEDURE Update_Classification TO 'api'@'%';
 GRANT EXECUTE ON PROCEDURE Delete_Classification TO 'api'@'%';
+GRANT EXECUTE ON PROCEDURE Insert_Api_Key TO 'api'@'%';
+GRANT EXECUTE ON PROCEDURE Update_Api_Key TO 'api'@'%';
 
 GRANT SELECT ON `Get_All_Revenue` TO 'api'@'%';
 GRANT SELECT ON `Get_All_Genres_By_Views` TO 'api'@'%';
@@ -226,6 +236,7 @@ GRANT SELECT ON `List_Episodes` TO 'api'@'%';
 GRANT SELECT ON `Get_Profile_Id` TO 'api'@'%';
 GRANT SELECT ON `List_Watch_List` TO 'api'@'%';
 GRANT SELECT ON `List_Classifications` TO 'api'@'%';
+GRANT SELECT ON `Get_Api_Key` TO 'api'@'%';
 
 -- Drop root users (if they exist)
 
@@ -255,8 +266,7 @@ ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_All_Revenue` AS select sum(case w
 ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_Top_Ten_Watched_Movies` AS select `Netflix`.`Media`.`title` AS `MovieTitle`,count(`Netflix`.`Profile_Watched_Media`.`profile_id`) AS `TimesWatched` from (`Netflix`.`Media` join `Netflix`.`Profile_Watched_Media` on(`Netflix`.`Media`.`media_id` = `Netflix`.`Profile_Watched_Media`.`media_id`)) where `Netflix`.`Media`.`series_id` is null group by `Netflix`.`Media`.`media_id`,`Netflix`.`Media`.`title` order by count(`Netflix`.`Profile_Watched_Media`.`profile_id`) desc;
 ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_Watched_Media_By_Views` AS select `Netflix`.`Media`.`title` AS `MediaTitle`,count(`Netflix`.`Profile_Watched_Media`.`profile_id`) AS `TimesWatched` from (`Netflix`.`Media` join `Netflix`.`Profile_Watched_Media` on(`Netflix`.`Media`.`media_id` = `Netflix`.`Profile_Watched_Media`.`media_id`)) group by `Netflix`.`Media`.`media_id`,`Netflix`.`Media`.`title` order by count(`Netflix`.`Profile_Watched_Media`.`profile_id`) desc;
 ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_Token` AS select `Netflix`.`Tokens`.`account_id` AS `account_id`,`Netflix`.`Tokens`.`token` AS `token` from `Netflix`.`Tokens`;
-
-
+ALTER DEFINER=`senior`@`%` VIEW `Netflix`.`Get_Api_Key` AS select `Netflix`.`Api_Keys`.`api_key` AS `api_key` from `Netflix`.`Api_Keys`;
 
 DROP USER IF EXISTS 'root'@'localhost';
 DROP USER IF EXISTS 'root'@'%';

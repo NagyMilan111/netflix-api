@@ -1438,3 +1438,49 @@ BEGIN
 END //
 
 DELIMITER ;
+
+DELIMITER //
+
+CREATE DEFINER=`senior`@`%` PROCEDURE Insert_Api_Key(
+    IN input_api_key varchar(255),
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE rows_affected INT;
+
+    INSERT INTO Api_Keys VALUES (input_api_key, DATE_ADD(NOW(), INTERVAL 72 HOUR));
+
+    SET rows_affected = ROW_COUNT();
+    IF rows_affected > 0 THEN
+        SET result_message = 'Api key inserted successfully.';
+    ELSE
+        SET result_message = 'Something went wrong.';
+    END IF;
+
+END //
+
+DELIMITER ;
+
+DELIMITER //
+
+CREATE DEFINER=`senior`@`%` PROCEDURE Update_Api_Key(
+    IN old_api_key varchar(255),
+    IN new_api_key varchar(255),
+    OUT result_message VARCHAR(255)
+)
+BEGIN
+    DECLARE rows_affected INT;
+
+    UPDATE Api_Keys SET api_key = new_api_key, expire_at = DATE_ADD(NOW(), INTERVAL 72 HOUR)
+    WHERE api_key = old_api_key;
+
+    SET rows_affected = ROW_COUNT();
+    IF rows_affected > 0 THEN
+        SET result_message = 'Api key updated successfully.';
+    ELSE
+        SET result_message = 'Something went wrong.';
+    END IF;
+
+END //
+
+DELIMITER ;

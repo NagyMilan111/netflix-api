@@ -10,7 +10,6 @@ class AnalyticsController extends Controller
 
     public function topTen($type, $category, Request $request)
     {
-        $result = null;
         $validCategories = ['series', 'medias', 'movies', 'genres'];
         $validTypes = ['watched', 'longest', 'shortest'];
 
@@ -64,7 +63,6 @@ class AnalyticsController extends Controller
 
     public function bottomTen($category, Request $request)
     {
-        $result = null;
         $validCategories = ['series', 'medias', 'movies', 'genres'];
 
         try {
@@ -113,7 +111,6 @@ class AnalyticsController extends Controller
 
     public function sortAllByViews($category, Request $request)
     {
-        $result = null;
         $validCategories = ['series', 'medias', 'movies', 'genres'];
         try {
 
@@ -133,7 +130,7 @@ class AnalyticsController extends Controller
                 if ($result != null) {
                     return $this->respond(['values' => $result], $request, 200);
                 } else {
-                    return $this->respond(['error' => 'No values found.'], $request, 404);
+                    return $this->respond(['error' => 'No values     found.'], $request, 404);
                 }
 
 

@@ -188,3 +188,9 @@ CREATE TABLE IF NOT EXISTS `cache_locks`
     owner     varchar(255) NOT NULL,
     expiration int(11) NOT NULL
 ) ENGINE = INNODB;
+
+CREATE TABLE IF NOT EXISTS `Api_Keys`
+(
+    api_key varchar(255) PRIMARY KEY,
+    expire_at datetime not null
+) ENGINE = INNODB;
