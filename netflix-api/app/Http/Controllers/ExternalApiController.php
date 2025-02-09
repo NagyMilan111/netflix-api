@@ -3,14 +3,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+
 
 class ExternalApiController extends Controller
 {
     public function generateImage(Request $request)
 {
-    $request->validate([
+    $validator = Validator::make($request->all(), [
         'prompt' => 'required|string|max:255',
     ]);
+
+    if($validator->fails()){
+        return response()->json($validator->errors()->toJson(), 400);
+    }
 
     $prompt = $request->input('prompt');
     $baseUrl = 'https://image.pollinations.ai/prompt';
@@ -39,19 +45,19 @@ class ExternalApiController extends Controller
             file_put_contents($filePath, $response->body());
 
             // Return the public URL of the saved image
-            return response()->json([
+            return $this->respond([
                 'prompt' => $prompt,
                 'image_url' => url('generated_images/' . $fileName),
-            ], 200);
+            ], $request, 201);
         }
 
         // If the response is not an image
         \Log::error('Unexpected API Response', ['body' => $response->body()]);
-        return response()->json(['error' => 'Unexpected response from the API.'], 500);
+        return $this->respond(['error' => 'Unexpected response from the API.'], $request, 500);
 
     } catch (\Exception $e) {
         \Log::error('Image Generation Error:', ['message' => $e->getMessage()]);
-        return response()->json(['error' => 'An error occurred while processing your request.'], 500);
+        return $this->respond(['error' => 'An error occurred while processing your request.'], $request, 500);
     }
 }
 

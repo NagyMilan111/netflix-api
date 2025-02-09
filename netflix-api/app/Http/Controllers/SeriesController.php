@@ -2,72 +2,143 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Series;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SeriesController extends Controller
 {
     // List all series
-    public function index()
+    public function listAllSeries(Request $request)
     {
-        $series = Series::all();
-        return response()->json($series);
+        try {
+            $series = DB::select('SELECT * FROM List_Series');
+            if($series != null) {
+                return $this->respond(['values' => $series], $request, 200);
+            }
+            else{
+                return $this->respond(['error' => 'No series found.'], $request, 404);
+            }
+        } catch (\Exception $e) {
+            return $this->respond(["message" => "An error occurred while listing series.", "error" => $e], $request, 500);
+        }
     }
 
     // Show a specific series
-    public function show($id)
+    public function getSeriesById($id, Request $request)
     {
-        $series = Series::find($id);
+        try {
+            $series = DB::select('SELECT * FROM List_Series WHERE series_id = ?', [$id]);
 
-        if (!$series) {
-            return response()->json(['message' => 'Series not found'], 404);
+            if ($series == null) {
+                return $this->respond(['error' => 'Series not found'], $request, 404);
+            } else {
+                return $this->respond(['values' => $series], $request, 200);
+            }
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
-
-        return response()->json($series);
     }
 
     // Create a new series
-    public function store(Request $request)
+    public function createNewSeries(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'genre_id' => 'required|exists:genres,genre_id', // Updated to match the genres table's column
-            'number_of_seasons' => 'required|integer|min:1',
-        ]);
+        try {
 
-        $series = Series::create($request->all());
-        return response()->json($series, 201);
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'number_of_seasons' => 'required|integer|min:1',
+                'genre_id' => 'required|integer|min:1',
+            ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
+            $title = $request->input('title');
+            $number_of_seasons = $request->input('number_of_seasons');
+            $genre_id = $request->input('genre_id');
+
+            DB::select('CALL Insert_Series(?, ?, ?, @message)', [$title, $genre_id, $number_of_seasons]);
+
+            $result = DB::select('SELECT @message as message')[0];
+
+            $message = $result->message;
+
+            if ($message == 'Series inserted successfully.') {
+                return $this->respond(['message' => 'Series inserted successfully.'], $request, 201);
+            } else if ($message == 'Failed to insert series.'){
+                return $this->respond(['error' => $message], $request, 500);
+            }
+            else{
+                return $this->respond(['error' => $message], $request, 404);
+            }
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
+        }
     }
+
 
     // Update an existing series
-    public function update(Request $request, $id)
+    public function updateSeries(Request $request, $id)
     {
-        $series = Series::find($id);
 
-        if (!$series) {
-            return response()->json(['message' => 'Series not found'], 404);
+        try {
+
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'number_of_seasons' => 'required|integer|min:1',
+                'genre_id' => 'required|integer|min:1',
+            ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
+            $title = $request->input('title');
+            $number_of_seasons = $request->input('number_of_seasons');
+            $genre_id = $request->input('genre_id');
+
+            DB::select('CALL Update_Series(?, ?, ?, ?, @message)', [$id, $title, $genre_id, $number_of_seasons]);
+
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Series updated successfully.') {
+                return $this->respond(['message' => 'Series updated successfully.'], $request, 200);
+            } elseif ($message == 'Series not found.') {
+                return $this->respond(['error' => 'Series not found.'], $request, 404);
+            } else {
+                return $this->respond(['error' => $message], $request, 400);
+            }
+
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
 
-        $request->validate([
-            'title' => 'sometimes|required|string|max:255',
-            'genre_id' => 'sometimes|required|exists:genres,genre_id', // Updated validation
-            'number_of_seasons' => 'sometimes|required|integer|min:1',
-        ]);
-
-        $series->update($request->all());
-        return response()->json($series);
     }
 
+
     // Delete a series
-    public function destroy($id)
+    public function deleteSeries($id, Request $request)
     {
-        $series = Series::find($id);
+        try {
 
-        if (!$series) {
-            return response()->json(['message' => 'Series not found'], 404);
+            DB::select('CALL Delete_Series(?, @message)', [$id]);
+
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Series deleted successfully.') {
+                return $this->respond(['message' => 'Series deleted successfully.'], $request, 200);
+            } elseif ($message == 'Series not found.') {
+                return $this->respond(['message' => 'Series not found.'], $request, 404);
+            } else {
+                return $this->respond(['message' => $message], $request, 500);
+            }
+
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
-
-        $series->delete();
-        return response()->json(['message' => 'Series deleted successfully']);
     }
 }

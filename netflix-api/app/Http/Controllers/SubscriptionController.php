@@ -4,22 +4,27 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
 
 class SubscriptionController extends Controller
 {
     /**
      * Get subscription details for a user.
      */
-    public function getSubscriptionDetails($userId)
+    public function getSubscriptionDetails($id, Request $request)
     {
+        try {
+            $result = DB::select('SELECT * FROM Get_Subscription_Details WHERE account_id = ?', [$id]);
 
-        $result = DB::select('SELECT * FROM Get_Subscription_Details WHERE user_id = ?', [$userId]);
-
-        if ($result[0] == null) {
-            return response()->json(['error' => 'Subscription details not found.'], 404);
+            if ($result[0] == null) {
+                return $this->respond(['error' => 'Subscription details not found.'], $request, 404);
+            } else {
+                return $this->respond(['values' => $result], $request, 200);
+            }
         }
-        else {
-            return response()->json(['details' => $result], 200);
+        catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -28,25 +33,33 @@ class SubscriptionController extends Controller
      */
     public function updateSubscription(Request $request)
     {
-        // Validate input
-        $validatedData = $request->validate([
-            'user_id' => 'required|integer|exists:Account,account_id',
-            'subscription_id' => 'required|integer|exists:Subscription,subscription_id',
-        ]);
+        try {
 
+            $validator = Validator::make($request->all(), [
+                'account_id' => 'required|integer|min:1',
+                'subscription_id' => 'required|integer|min:1',
+            ]);
 
-        $userId = $validatedData['user_id'];
-        $subscriptionId = $validatedData['subscription_id'];
-        $result = DB::select('CALL Update_User_Subscription(?, ?)', [$userId, $subscriptionId]);
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
-        if ($result[0] == 'Subscription updated successfully.') {
-            return response()->json(['message' => 'Subscription updated successfully.'], 200);
-        }
-        elseif ($result[0] = 'Failed to update subscription.'){
-            return response()->json(['error' => $result[0]], 400);
-        }
-        else {
-            return response()->json(['error' => $result[0]], 404);
+            $account_id = $request->input('account_id');
+            $subscription_id = $request->input('subscription_id');
+            DB::select('CALL Update_Account_Subscription(?, ?, @message)', [$account_id, $subscription_id]);
+
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Subscription updated successfully.') {
+                return $this->respond(['message' => 'Subscription updated successfully.'], $request, 200);
+            } elseif ($message = 'Failed to update subscription. No changes made.') {
+                return $this->respond(['error' => $message], $request, 400);
+            } else {
+                return $this->respond(['error' => $message], $request, 404);
+            }
+        } catch(\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 }

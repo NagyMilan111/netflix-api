@@ -1,0 +1,43 @@
+/* Dashboard Page Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: black;
+  overflow: hidden;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* justify-content: center; */
+  justify-content: flex-start;
+  height: 100vh;
+  background-color: black;
+}
+
+.netflix-logo {
+  width: 100px;
+  margin-bottom: 100px; /* Moved up */
+}
+
+.image-container {
+  display: flex;
+  justify-content: center;
+  gap: 100px; /* Reduced space between images */
+}
+
+.dashboard-image {
+  width: 200px;
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  background-color: red;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.dashboard-image:hover {
+  transform: scale(1.1);
+}

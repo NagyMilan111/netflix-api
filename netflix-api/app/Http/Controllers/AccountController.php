@@ -6,13 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AccountController extends Controller
 {
     /**
      * Login a user and return a token.
      */
+
     public function login(Request $request)
     {
         try {
@@ -25,61 +26,73 @@ class AccountController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return $this->respond(['error' => $validator->errors()], $request, 400);
             }
+
             $email = $request->input('email');
             $password = $request->input('password');
-            $password = Crypt::encrypt($password);
+            $key = 'login_attempts_' . $email;
 
-            // Call the stored procedure
-            DB::select('CALL User_Login(?, ?, @message, @account_id)', [$email, $password]);
+            if (RateLimiter::tooManyAttempts($key, 3)) {
+                DB::select('CALL Block_User(?, @message)', [$email]);
+                $result = DB::select('SELECT @message AS message')[0];
+                $message = $result->message;
 
-            // Retrieve both OUT parameters in a single query
-            $outParams = DB::select('SELECT @message AS message, @account_id AS account_id')[0];
+                if ($message == 'User successfully blocked.') {
+                    return $this->respond(['error' => 'Too many login attempts. Please reset your password.'], $request, 429);
+                }
+                else if ($message == 'User not found.') {
+                    return $this->respond(['error' => 'User not found.'], $request, 404);
+                }
+                else{
+                    return $this->respond(['error' => $message], $request, 500);
+                }
+            }
 
-            // Access the OUT parameters
+            DB::select('CALL User_Login(?, @message, @account_id, @hashed_password)', [$email]);
+
+            $outParams = DB::select('SELECT @message AS message, @account_id AS account_id, @hashed_password AS hashed_password')[0];
+
             $message = $outParams->message;
             $account_id = $outParams->account_id;
+            $hashed_password = $outParams->hashed_password;
 
-
-            // Use $userId as needed
-            if ($message == 'User login successful.') {
-                return response()->json(['success' => $message, 'account_id' => $account_id], 200);
-            }
             if ($message == 'User not found.') {
-                return response()->json(['error' => $message], 404);
+                return $this->respond(['error' => $message], $request, 404);
+            } else if ($message == 'User is blocked.') {
+                return $this->respond(['error' => $message], $request, 401);
+            } else if ($message == 'Authentication required.') {
+                if (!Hash::check($password, $hashed_password)) {
+                    RateLimiter::hit($key, 300);
+                    return $this->respond(['error' => 'Incorrect password.'], $request, 401);
+                } else {
+
+                    // Generate a token
+                    $token = bin2hex(random_bytes(40));
+
+                    // Store the token in the database
+                    DB::select('CALL Insert_Token(?, ?, @message)', [$account_id, $token]);
+                    $insertTokenResult = DB::select('SELECT @message AS message')[0];
+                    $insertTokenMessage = $insertTokenResult->message;
+                    if ($insertTokenMessage == 'Token inserted successfully.') {
+                        return $this->respond([
+                            'token' => $token,
+                            'user' => [
+                                'account_id' => $account_id,
+                                'email' => $email
+                            ],
+                            'message' => 'Login successful.',
+                        ], $request, 200);
+                    } else {
+                        return $this->respond(['error' => 'Failed to add token.'], $request, 500);
+                    }
+                }
+
             }
 
-            // Verify the password
-            if ($message == 'Incorrect password.') {
-                return response()->json(['error' => $message], 401);
-            }
-
-            if ($message == 'User is blocked.') {
-                return response()->json(['error' => $message], 401);
-            }
-            // Generate a token
-            $token = bin2hex(random_bytes(40));
-            /*
-                        // Store the token in the database
-                        $insertTokenResult = DB::select('CALL Insert_Token(?, ?, @message)', [$result[1], $token]);
-                        if($insertTokenResult[0] == 'Token inserted successfully.') {
-                            return response()->json([
-                                'token' => $token,
-                                'user' => [
-                                    'account_id' => $result[1],
-                                    'email' => $email
-                                ],
-                                'message' => 'Login successful.',
-                            ], 200);
-                        }
-                        else {
-                            return response()->json(['error' => 'Failed to add token.'], 500);
-                        }
-            */
         } catch (\Exception $e) {
             \Log::error('Login Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error.'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -90,13 +103,12 @@ class AccountController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'email' => 'required|string|email|max:255|unique:Account,email',
+                'email' => 'required|string|email|max:255',
                 'password' => 'required|string|min:8',
-                'subscription_id' => 'required|integer|exists:Subscription,subscription_id',
-            ]);
+                'subscription_id' => 'required|integer|min:1']);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return $this->respond(['error' => $validator->errors()], $request, 400);
             }
 
             // Hash the password
@@ -104,19 +116,24 @@ class AccountController extends Controller
             $subscriptionId = $request->input('subscription_id');
             $email = $request->input('email');
 
-            $result = DB::select('CALL Register_User(?, ?, ?, @a)', [$email, $hashedPassword, $subscriptionId]);
-            if ($result[0] == 'User registered successfully.') {
-                return response()->json([
+            DB::select('CALL Register_User(?, ?, ?, @result_message)', [$email, $hashedPassword, $subscriptionId]);
+
+            $result = DB::select('SELECT @result_message AS message')[0];
+
+            $message = $result->message;
+
+            if ($message == 'User registered successfully.') {
+                return $this->respond([
                     'message' => 'User registered successfully.',
-                ], 201);
-            } elseif ($result[0] == 'Email already exists.') {
-                return response()->json([
-                    'message' => 'Email already exists.',
-                ], 401);
+                ], $request, 201);
+            } elseif ($message == 'Email already exists.') {
+                return $this->respond([
+                    'error' => 'Email already exists.',
+                ], $request, 400);
             }
         } catch (\Exception $e) {
             \Log::error('Register Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -131,27 +148,30 @@ class AccountController extends Controller
 
             // If no token is provided, return a 400 response
             if (!$token) {
-                return response()->json(['error' => 'No token provided.'], 400);
+                return $this->respond(['error' => 'No token provided.'], $request, 400);
             }
 
             // Check if the token exists in the database
             $tokenExists = DB::select('SELECT * FROM Get_Token WHERE token = ?', [$token]);
 
             if (!$tokenExists) {
-                return response()->json(['error' => 'Token not found or invalid'], 401);
+                return $this->respond(['error' => 'Token not found or invalid.'], $request, 404);
             }
 
             // Delete the token from the database
-            $deleted = DB::select('CALL Delete_Token(?)', [$token]);
+            DB::select('CALL Delete_Token(?, @message)', [$token]);
 
-            if ($deleted[0] == 'Token deleted successfully.') {
-                return response()->json(['message' => 'Logged out successfully'], 200);
+            $result = DB::select('SELECT @message AS message')[0];
+            $message = $result->message;
+
+            if ($message == 'Token deleted successfully.') {
+                return $this->respond(['message' => 'Logged out successfully.'], $request, 200);
             } else {
-                return response()->json(['error' => 'Failed to log out'], 500);
+                return $this->respond(['error' => 'Failed to log out.'], $request, 500);
             }
         } catch (\Exception $e) {
             \Log::error('Logout Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -168,60 +188,81 @@ class AccountController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
+                return $this->respond(['error' => $validator->errors()], $request, 400);
             }
 
             $password = $request->input('password');
             $email = $request->input('email');
 
-            $password = Crypt::encrypt($password);
-            //Make this work with tokens somehow
-            $result = DB::select('CALL Update_Password(?, ?)', $email, $password);
-            if ($result[0] == 'Password updated successfully.') {
-                return response()->json(['message' => $result[0]], 200);
+            $password = Hash::make($password);
+            DB::select('CALL Update_Password(?, ?, @result_message)', [$email, $password]);
+            $result = DB::select('SELECT @result_message AS result_message')[0];
+            $message = $result->result_message;
+
+            if ($message == 'Password updated successfully.') {
+                return $this->respond(['message' => $message], $request, 200);
             } else {
-                return response()->json(['error' => $result[0]], 404);
+                return $this->respond(['error' => $message], $request, 404);
             }
 
         } catch (\Exception $e) {
             \Log::error('Reset Password Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
     /**
      * Block an account by its ID.
      */
-    public function blockAccount($email)
+    public function blockAccount(Request $request)
     {
         try {
-            $result = DB::select('CALL Block_User(?)', $email);
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email|max:255',
+            ]);
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
-            if ($result[0] == 'User successfully blocked.') {
-                return response()->json(['message' => $result[0]], 200);
-            } elseif ($result[0] == 'User not found.') {
-                return response()->json(['error' => $result[0]], 404);
+            $email = $request->input('email');
+            DB::select('CALL Block_User(?, @message)', [$email]);
+
+            $result = DB::select('SELECT @message AS message')[0];
+            $message = $result->message;
+
+            if ($message == 'User successfully blocked.') {
+                return $this->respond(['message' => $message], $request, 200);
+            } else if ($message == 'User not found.') {
+                return $this->respond(['error' => $message], $request, 404);
+            } else {
+                return $this->respond(['error' => $message], $request, 400);
             }
 
         } catch (\Exception $e) {
             \Log::error('Block Account Error: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
     /**
      * Delete a profile by its ID.
      */
-    public function deleteProfile(Request $request)
+    public function deleteProfile($id, Request $request)
     {
-        $profile_id = $request->input('profile_id');
+        try {
+            DB::select('CALL Remove_Profile(?, @message)', [$id]);
 
-        $result = DB::select('CALL Remove_Profile(?)', [$profile_id]);
+            $result = DB::select('SELECT @message AS message')[0];
 
-        if ($result[0] == 'Profile removed successfully.') {
-            return response()->json(['message' => $result[0]], 200);
-        } else {
-            return response()->json(['message' => $result[0]], 404);
+            $message = $result->message;
+
+            if ($message == 'Profile removed successfully.') {
+                return $this->respond(['message' => $message], $request, 200);
+            } else {
+                return $this->respond(['message' => $message], $request, 404);
+            }
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
@@ -230,28 +271,59 @@ class AccountController extends Controller
      */
     public function addProfile(Request $request)
     {
-        // Validate the request
-        $validatedData = $request->validate([
-            'account_id' => 'required|integer|exists:Account,account_id',
-            'profile_name' => 'required|string|max:255',
-            'profile_age' => 'required|integer|min:1',
-            'profile_lang' => 'required|integer|exists:Language,lang_id',
-        ]);
+        try {
+            // Validate the request
+            $validatedData = $request->validate([
+                'account_id' => 'required|integer|min:1',
+                'profile_name' => 'required|string|max:255',
+                'profile_age' => 'required|integer|min:1',
+                'profile_lang' => 'required|integer|min:1',
+                'profile_image' => 'required|string|max:255',
+                'profile_movies_preferred' => 'required|integer|min:0|max:1',
+            ]);
 
-        $account_id = $validatedData['account_id'];
-        $profile_name = $validatedData['profile_name'];
-        $profile_age = $validatedData['profile_age'];
-        $profile_lang = $validatedData['profile_lang'];
-        $profile_image = $request->input('profile_image');
-        $profile_movies_preferred = $request->input('profile_movies_preferred');
+            $account_id = $validatedData['account_id'];
+            $profile_name = $validatedData['profile_name'];
+            $profile_age = $validatedData['profile_age'];
+            $profile_lang = $validatedData['profile_lang'];
+            $profile_image = $request->input('profile_image');
+            $profile_movies_preferred = $request->input('profile_movies_preferred');
 
-        $result = DB::select('CALL Add_Profile(?, ?, ?, ?, ?, ?)', [$account_id, $profile_name, $profile_image,
-            $profile_age, $profile_lang, $profile_movies_preferred]);
+            DB::select('CALL Add_Profile(?, ?, ?, ?, ?, ?, @result_message)', [$account_id, $profile_name, $profile_image,
+                $profile_age, $profile_lang, $profile_movies_preferred]);
 
-        if ($result[6] == 'Profile_Added_Successfully') {
-            return response()->json(['message' => 'Profile added successfully.'], 201);
-        } else {
-            return response()->json(['message' => $result[6]], 404);
+            $result = DB::select('SELECT @result_message AS result_message')[0];
+            $message = $result->result_message;
+
+            if ($message == 'Profile added successfully.') {
+                return $this->respond(['message' => 'Profile added successfully.'], $request, 201);
+            } else if ($message == 'Account not found.') {
+                return $this->respond(['message' => $message], $request, 404);
+            } else {
+                return $this->respond(['error' => $message], $request, 400);
+            }
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
+        }
+    }
+
+    public function deleteAccount(Request $request, $id)
+    {
+        try {
+
+            DB::select('CALL Remove_Account(?, @message)', [$id]);
+
+            $result = DB::select('SELECT @message AS message')[0];
+            $message = $result->message;
+
+            if ($message == 'Account removed successfully.') {
+                return $this->respond(['message' => $message], $request, 200);
+            } else {
+                return $this->respond(['message' => $message], $request, 404);
+            }
+
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 

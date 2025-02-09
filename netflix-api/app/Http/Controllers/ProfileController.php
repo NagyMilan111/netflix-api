@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends Controller
 {
@@ -11,41 +12,61 @@ class ProfileController extends Controller
     /**
      * Update preferences for a profile.
      */
-    public function updatePreferences(Request $request)
+
+    public function updatePreferences(Request $request, $id)
     {
-        // Validate the request
-        $validatedData = $request->validate([
-            'profile_id' => 'required|integer|exists:Profile,profile_id',
-            'profile_movies_preferred' => 'nullable|boolean',
-        ]);
+        try {
 
-        $result = DB::select('CALL Update_Profile_Preferences(?)', [$request->input('profile_id')]);
+            $validator = Validator::make($request->all(), [
+                'movies_preferred' => 'required|integer|'
+            ]);
 
-        if ($result[0] == 'Preferences updated successfully.') {
-            return response()->json(['message' => 'Preferences updated successfully.'], 200);
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
 
-        } else if ($result[0] == 'Failed to update preferences.') {
-            return response()->json(['error' => 'Failed to update preferences.'], 500);
-        }
-        else {
-            return response()->json(['message' => $result[0]], 404);
+            $movies_preferred = $request->input('movies_preferred');
+
+            DB::select('CALL Update_Profile_Preferences(?, ?, @message)', [$id, $movies_preferred]);
+            $result = DB::select('SELECT @message as message')[0];
+            $message = $result->message;
+
+            if ($message == 'Preferences updated successfully.') {
+                return $this->respond(['message' => 'Preferences updated successfully.'], $request, 200);
+            } else if ($message == 'Failed to update preferences.') {
+                return $this->respond(['error' => 'Failed to update preferences.'], $request, 500);
+            } else if ($message == 'Profile not found.') {
+                return $this->respond(['error' => $message], $request, 404);
+            } else {
+                return $this->respond(['error' => $message], $request, 400);
+            }
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
     }
 
     /**
      * Get a user's watchlist.
      */
-    public function getToWatchList(Request $request)
-    {
 
-        $profile_id = $request->input('profile_id');
-        // Fetch watchlist for the given account
-        $toWatch = DB::select('CALL Get_Watch_List(?)', [$profile_id]);
-        if($toWatch != null) {
-            return response()->json(['watchHistory' => $toWatch], 200);
-        }
-        else {
-            return response()->json(['error' => 'Watch List not found.'], 404);
+    public function getToWatchList($id, Request $request)
+    {
+        try {
+            $profile = DB::select('SELECT * FROM Get_Profile_Id WHERE profile_id = ?', [$id]);
+            if ($profile == null) {
+                return $this->respond(['error' => 'Profile not found.'], $request, 404);
+            } else {
+                $watchList = DB::select('SELECT * FROM List_Watch_List WHERE profile_id = ?', [$id]);
+                if ($watchList == null) {
+                    return $this->respond(['error' => 'Profile has no watch list.'], $request, 404);
+                }
+                else{
+                    return $this->respond(['values' => $watchList], $request, 200);
+                }
+            }
+
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
 
     }
@@ -53,38 +74,89 @@ class ProfileController extends Controller
     /**
      * Manage a user's watchlist (add or remove media).
      */
-    public function manageWatchList($mediaId, $seriesId, Request $request)
+    public function manageWatchList(Request $request, $id)
     {
-        // Validate input
-        $validatedData = $request->validate([
-            'profile_id' => 'required|integer|exists:Profile,profile_id',
-            'action' => 'required|in:add,remove',
-        ]);
+        try {
+            // Validate input
+            $validator = Validator::make($request->all(), [
+                'media_id' => 'required|integer|min:1',
+                'series_id' => 'required|integer|min:1',
+            ]);
 
-        if ($validatedData['action'] === 'add') {
-            // Add media to the watchlist
-            $result = DB::select('CALL Insert_Into_Watch_List(?, ?, ?)', [$validatedData['profile_id'], $mediaId, $seriesId]);
-            if($result[0] == 'Row inserted into Profile_Watch_List successfully.') {
-                return response()->json(['message' => 'Media added to watchlist.']);
+            if($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
             }
-            else
-            {
-                return response()->json(['message' => 'Something went wrong'], 500);
-            }
-        } else {
-            // Remove media from the watchlist
-            $result = DB::select('CALL Delete_From_Profile_Watch_List(?, ?, ?)', [$validatedData['profile_id'], $mediaId, $seriesId]);
 
-            if($result[0] == 'Row deleted from Profile_Watch_List successfully.') {
-                return response()->json([
-                    'message' => 'Media removed from watchlist.'
-                ]);
+            $media_id = $request->input('media_id');
+            $series_id = $request->input('series_id');
+
+            $action = $request->input('action');
+            $validActions = ['add', 'remove'];
+
+            if (in_array($action, $validActions)) {
+                // Add media to the watchlist
+                DB::select('CALL Update_Profile_Watch_List(?, ?, ?, ?, @message)', [$id, $media_id, $series_id, $action]);
+                $result = DB::select('SELECT @message as message')[0];
+                $message = $result->message;
+
+                if ($message == 'Media added to watch list successfully.') {
+                    return $this->respond(['message' => $message], $request, 201);
+                } else if ($message == 'Media removed from watch list successfully.'){
+                    return $this->respond(['message' => $message], $request, 200);
+                } else if ($message == 'Media not found.' || $message == 'Profile not found.' || $message == 'Series not found.') {
+                    return $this->respond(['error' => $message], $request, 404);
+                }
+                else {
+                    return $this->respond(['error' => 'An error occurred while updating the watch list'], $request, 500);
+                }
+            } else {
+                return $this->respond(['error' => 'Invalid action.'], $request, 400);
             }
-            else
-            {
-                return response()->json(['message' => 'Something went wrong.'], 500);
-            }
+        } catch (\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
         }
+    }
+
+    public function updateViewClassifications(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'classification_id' => 'required|integer|min:1',
+            ]);
+
+            if($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
+            $classificationId = $request->input('classification_id');
+            $action = $request->input('action');
+            $validActions = ['add', 'remove'];
+
+            if(in_array($action, $validActions)) {
+                DB::select('CALL Update_Profile_Viewing_Classification(?, ?, ?, @message)', [$id, $classificationId, $action]);
+                $result = DB::select('SELECT @message a s message')[0];
+                $message = $result->message;
+
+                if($message == 'Profile not found.' || $message == 'Viewing classification not found.') {
+                    return $this->respond(['error' => $message], $request, 404);
+                }
+                else if ($message == 'Failed to remove viewing classification.' || $message == 'Failed to add viewing classification.') {
+                    return $this->respond(['error' => $message], $request, 500);
+                }
+                else if($message == 'Viewing classification added successfully.'){
+                    return $this->respond(['message' => $message], $request, 201);
+                }
+                else {
+                    return $this->respond(['message' => $message], $request, 200);
+                }
+            }
+            else {
+                return $this->respond(['error' => 'Invalid action.'], $request, 400);
+            }
+        } catch(\Exception $e) {
+            return $this->respond(['error' => $e], $request, 500);
+        }
+
     }
 
 }

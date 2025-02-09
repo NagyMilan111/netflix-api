@@ -1,0 +1,76 @@
+/* Login Page Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: black;
+  overflow: hidden;
+}
+
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: black;
+}
+
+.netflix-logo {
+  width: 160px;
+  margin-bottom: 20px;
+}
+
+.login-box {
+  background-color: rgba(24, 24, 24, 0.8);
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  width: 400px;
+}
+
+.login-box h2 {
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px;
+  border-radius: 5px;
+  background-color: #333;
+  border: 1px solid #555;
+  color: white;
+  margin-bottom: 15px;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: red;
+}
+
+.login-button {
+  width: 100%;
+  padding: 12px;
+  background-color: red;
+  color: white;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border: none;
+  text-align: center;
+}
+
+.login-button:hover {
+  background-color: darkred;
+}
+
+.remember-help {
+  display: flex;
+  justify-content: space-between;
+  color: gray;
+  font-size: 14px;
+}

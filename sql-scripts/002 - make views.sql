@@ -287,3 +287,48 @@ SELECT
 FROM
     Account;
 
+CREATE VIEW List_Series AS
+SELECT
+    series_id,
+    title,
+    number_of_seasons
+FROM
+    Series;
+
+CREATE VIEW List_Episodes AS
+SELECT
+    media_id,
+    title,
+    duration,
+    series_id,
+    season,
+    genre_id
+FROM
+    Media
+WHERE series_id IS NOT NULL AND season IS NOT NULL;
+
+CREATE VIEW Get_Profile_Id AS
+SELECT
+    profile_id
+FROM
+    Profile;
+
+CREATE VIEW List_Watch_List AS
+SELECT
+    media_id,
+    series_id,
+    profile_id
+FROM
+    Profile_Watch_List;
+
+CREATE VIEW List_Classifications AS
+    SELECT
+    classification_id,
+    classification
+FROM Viewing_Classification;
+
+CREATE VIEW Get_Api_Key AS
+    SELECT
+    api_key,
+    expire_at
+FROM Api_Keys;

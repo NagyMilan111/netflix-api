@@ -83,7 +83,30 @@ If a `docker-compose.yml` file is provided:
   docker rmi <image-name>
   ```
 
-NOTE: RESTART NETFLIX-API DUE TO TOKEN ERROR
+NOTE: After building edit .env from inside the netflix-api file.
+It must be the same as a user with high priviliges from the sql-scripts\004 - make users.sql in order to work and then restart the api's container.
+
+## Setup The Frontend
+- Open as Admin CMD in the file netflix_frontend and install dependencies:
+  ```
+  npm install
+  npm install axios
+  ```
+
+### Compiles and hot-reloads for development
+  ```
+  npm run serve
+  ```
+
+### Compiles and minifies for production
+  ```
+  npm run build
+  ```
+
+### Lints and fixes files
+  ```
+  npm run lint
+  ```
 
 # MariaDB Backup and Restore Guide
 

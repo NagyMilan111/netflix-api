@@ -27,8 +27,8 @@ services:
     environment:
       DB_HOST: mariadb
       DB_DATABASE: Netflix
-      DB_USERNAME: senior
-      DB_PASSWORD: password
+      DB_USERNAME: root
+      DB_PASSWORD: qwerty
     command: >
       sh -c "/var/www/html/docker/wait-for-it.sh mariadb:3306 -- /var/www/html/docker/entrypoint.sh"    
 
@@ -44,22 +44,21 @@ services:
     depends_on:
       - mariadb
 
-# Vue.js Frontend WIP DUE TO ERRORS
-#  frontend:
- #   build:
-#     context: ./vue
-#     dockerfile: Dockerfile
-#   container_name: vue_frontend
-#   restart: unless-stopped
-#   working_dir: /vue
-#   volumes:
-#     - ./vue:/laravel
-#   ports:
-#     - "8082:8000"
-#   command: >
-#      sh -c "/laravel/docker/entrypoint.sh"
-#   depends_on:
-#     - laravel
+  frontend:
+    build:
+      context: ./netflix_frontend
+      dockerfile: Dockerfile
+    container_name: vue_frontend
+    restart: no
+    ports:
+      - "8080:8080" # Expose Vue.js frontend on port 8080
+    volumes:
+      - ./netflix_frontend:/app
+      - /app/node_modules
+    working_dir: /app
+    environment:
+      - CHOKIDAR_USEPOLLING=true # Enable file watching in Docker
+    command: npm run serve
 
 
 volumes:
