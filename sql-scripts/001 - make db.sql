@@ -188,3 +188,11 @@ CREATE TABLE IF NOT EXISTS `cache_locks`
     owner     varchar(255) NOT NULL,
     expiration int(11) NOT NULL
 ) ENGINE = INNODB;
+
+CREATE TABLE IF NOT EXISTS `Api_Keys`
+(
+    api_key varchar(255) PRIMARY KEY,
+    expires_at datetime not null
+) ENGINE = INNODB;
+
+INSERT INTO `Api_Keys` VALUES ('BUYuJ29CfyIkHKeIqvoWSo1QYo4ESs9cB0D5E7eSGhSLmMfO14mBlIvtj840xYWj', ADDDATE(NOW(), INTERVAL 1826 DAY));

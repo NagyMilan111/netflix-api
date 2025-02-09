@@ -3,14 +3,20 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Validator;
+
 
 class ExternalApiController extends Controller
 {
     public function generateImage(Request $request)
 {
-    $request->validate([
+    $validator = Validator::make($request->all(), [
         'prompt' => 'required|string|max:255',
     ]);
+
+    if($validator->fails()){
+        return response()->json($validator->errors()->toJson(), 400);
+    }
 
     $prompt = $request->input('prompt');
     $baseUrl = 'https://image.pollinations.ai/prompt';

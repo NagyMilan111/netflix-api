@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -40,6 +41,15 @@ class MediaController extends Controller
     public function pauseMedia(Request $request, $id)
     {
         try {
+            $validator = Validator::make($request->all(),[
+                'pause_spot' => 'required|integer|min:1',
+                'profile_id' => 'required|integer|min:1',
+                ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $profile_id = $request->input('profile_id');
             $pause_spot = $request->input('pause_spot');
 
@@ -69,6 +79,15 @@ class MediaController extends Controller
     public function resumeMedia(Request $request, $id)
     {
         try {
+
+            $validator = Validator::make($request->all(),[
+                'profile_id' => 'required|integer|min:1',
+            ]);
+
+            if($validator->fails()){
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $profile_id = $request->input('profile_id');
 
             DB::select('CALL Fetch_Pause_Spot(?, ?, @message, @resume_at)', [$profile_id, $id]);

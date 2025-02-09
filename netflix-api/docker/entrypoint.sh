@@ -11,14 +11,14 @@ fi
 composer install --no-interaction --prefer-dist
 
 # Run migrations and seed the database
-php artisan migrate --force
+# php artisan migrate --force
 
 
 # Generate the application key and clear caches
 php artisan key:generate
 php artisan optimize:clear
 php artisan config:clear
-php artisan cache:clear
+# php artisan cache:clear
 php artisan view:clear
 php artisan route:clear
 

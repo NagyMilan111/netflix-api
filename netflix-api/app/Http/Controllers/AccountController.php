@@ -14,7 +14,6 @@ class AccountController extends Controller
      * Login a user and return a token.
      */
 
-    //TODO: Block account after 3 unsuccessful login attempts
     public function login(Request $request)
     {
         try {
@@ -105,10 +104,11 @@ class AccountController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'email' => 'required|string|email|max:255',
-                'password' => 'required|string|min:8',]);
+                'password' => 'required|string|min:8',
+                'subscription_id' => 'required|integer|min:1']);
 
             if ($validator->fails()) {
-                return $this->respond(['errors' => $validator->errors()], $request, 422);
+                return $this->respond(['error' => $validator->errors()], $request, 400);
             }
 
             // Hash the password
@@ -188,14 +188,13 @@ class AccountController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return $this->respond(['errors' => $validator->errors()], $request, 422);
+                return $this->respond(['error' => $validator->errors()], $request, 400);
             }
 
             $password = $request->input('password');
             $email = $request->input('email');
 
             $password = Hash::make($password);
-            //Make this work with tokens somehow
             DB::select('CALL Update_Password(?, ?, @result_message)', [$email, $password]);
             $result = DB::select('SELECT @result_message AS result_message')[0];
             $message = $result->result_message;
@@ -218,6 +217,13 @@ class AccountController extends Controller
     public function blockAccount(Request $request)
     {
         try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|string|email|max:255',
+            ]);
+            if ($validator->fails()) {
+                return $this->respond(['error' => $validator->errors()], $request, 400);
+            }
+
             $email = $request->input('email');
             DB::select('CALL Block_User(?, @message)', [$email]);
 
@@ -268,10 +274,12 @@ class AccountController extends Controller
         try {
             // Validate the request
             $validatedData = $request->validate([
-                'account_id' => 'required|integer',
+                'account_id' => 'required|integer|min:1',
                 'profile_name' => 'required|string|max:255',
                 'profile_age' => 'required|integer|min:1',
-                'profile_lang' => 'required|integer',
+                'profile_lang' => 'required|integer|min:1',
+                'profile_image' => 'required|string|max:255',
+                'profile_movies_preferred' => 'required|integer|min:0|max:1',
             ]);
 
             $account_id = $validatedData['account_id'];

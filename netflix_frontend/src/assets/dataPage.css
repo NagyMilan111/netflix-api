@@ -1,0 +1,74 @@
+/* Data Page Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: black;
+  overflow-y: auto;
+}
+
+.data-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  background-color: black;
+  padding: 20px;
+}
+
+.netflix-logo {
+  width: 100px;
+  margin-bottom: 20px;
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.data-column {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+h2 {
+  color: white;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.data-item {
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  margin-bottom: 10px;
+  border-radius: 5px;
+  color: white;
+  font-size: 16px;
+}
+
+.data-item:last-child {
+  margin-bottom: 0;
+}
+
+.logo-container {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover {
+  transform: scale(1.1);
+}
+
